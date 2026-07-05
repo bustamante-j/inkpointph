@@ -27,6 +27,18 @@ values
   ('Laminated Documents', 'Protected cards, certificates, IDs, and important everyday documents.', 20, 'Finishing', true, 3)
 on conflict do nothing;
 
+insert into public.price_items (service_name, unit_label, price_label, category, is_available, display_order)
+values
+  ('Black and white document', 'Short / A4', 'PHP 2.00+', 'Documents', true, 1),
+  ('Colored document', 'Short / A4', 'PHP 10.00+', 'Documents', true, 2),
+  ('Photo print', 'Per piece', 'PHP 20.00+', 'Photo', true, 3),
+  ('Sticker print', 'Per sheet', 'PHP 60.00+', 'Stickers', true, 4),
+  ('Lamination', 'Per piece', 'PHP 20.00+', 'Finishing', true, 5),
+  ('Scanning', 'Per page', 'PHP 5.00+', 'Digital', true, 6),
+  ('PDF merge / conversion', 'Per request', 'PHP 20.00+', 'Digital', true, 7),
+  ('Document formatting', 'Per document', 'PHP 50.00+', 'Editing', true, 8)
+on conflict do nothing;
+
 with inserted_clients as (
   insert into public.clients (full_name, phone_number, messenger_name, email, address_or_landmark, notes, status)
   values

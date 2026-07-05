@@ -450,5 +450,6 @@ function getRecordLabel(moduleKey: ModuleKey, record: AnyRecord) {
   if (moduleKey === "products") return String(record.name ?? "product");
   if (moduleKey === "services") return String(record.name ?? "service");
   if (moduleKey === "packages") return String(record.name ?? "package");
+  if (moduleKey === "prices") return String(record.service_name ?? "price item");
   return String(record.id ?? "record");
 }

@@ -118,6 +118,18 @@ create table if not exists public.products (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.price_items (
+  id uuid primary key default gen_random_uuid(),
+  service_name text not null,
+  unit_label text not null,
+  price_label text not null,
+  category text,
+  is_available boolean not null default true,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -152,7 +164,7 @@ create table if not exists public.activity_logs (
   )),
   module text not null check (module in (
     'clients', 'projects', 'projects_orders', 'payments', 'expenses',
-    'inventory', 'inventory_items', 'products', 'services', 'packages', 'reports',
+    'inventory', 'inventory_items', 'products', 'services', 'packages', 'prices', 'price_items', 'reports',
     'settings', 'authentication'
   )),
   record_id uuid,
@@ -205,6 +217,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists set_products_updated_at on public.products;
 create trigger set_products_updated_at
 before update on public.products
+for each row execute function public.set_updated_at();
+
+drop trigger if exists set_price_items_updated_at on public.price_items;
+create trigger set_price_items_updated_at
+before update on public.price_items
 for each row execute function public.set_updated_at();
 
 drop trigger if exists set_services_updated_at on public.services;
@@ -328,6 +345,7 @@ alter table public.expenses enable row level security;
 alter table public.inventory_items enable row level security;
 alter table public.inventory_transactions enable row level security;
 alter table public.products enable row level security;
+alter table public.price_items enable row level security;
 alter table public.services enable row level security;
 alter table public.packages enable row level security;
 alter table public.activity_logs enable row level security;
@@ -396,6 +414,17 @@ for all to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "price_items_public_available_read" on public.price_items;
+create policy "price_items_public_available_read" on public.price_items
+for select to anon, authenticated
+using (is_available = true or public.is_admin());
+
+drop policy if exists "price_items_admin_write" on public.price_items;
+create policy "price_items_admin_write" on public.price_items
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
 drop policy if exists "services_public_available_read" on public.services;
 create policy "services_public_available_read" on public.services
 for select to anon, authenticated
@@ -438,6 +467,7 @@ create index if not exists idx_expenses_expense_date on public.expenses(expense_
 create index if not exists idx_activity_logs_created_at on public.activity_logs(created_at desc);
 create index if not exists idx_order_timeline_entries_order_id on public.order_timeline_entries(order_id);
 create index if not exists idx_products_display_order on public.products(display_order);
+create index if not exists idx_price_items_display_order on public.price_items(display_order);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

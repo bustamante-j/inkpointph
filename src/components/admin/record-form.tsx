@@ -25,7 +25,7 @@ export function RecordForm({
     <form
       action={action}
       encType="multipart/form-data"
-      className="space-y-6 border border-zinc-300 bg-white p-5 shadow-sm shadow-zinc-950/5"
+      className="space-y-6 border border-red-900/20 bg-white p-5 shadow-sm shadow-red-950/5"
     >
       <div className="grid gap-4 md:grid-cols-2">
         {config.formFields.map((field) => (
@@ -40,7 +40,7 @@ export function RecordForm({
       <div className="flex flex-col-reverse gap-3 border-t border-zinc-100 pt-5 sm:flex-row sm:justify-end">
         <Link
           href={`/admin/${config.path}`}
-          className="inline-flex h-10 items-center justify-center border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 hover:border-red-900 hover:text-red-900"
+          className="inline-flex h-10 items-center justify-center border border-red-900/25 bg-white px-4 text-sm font-semibold text-red-950 hover:border-red-900 hover:text-red-900"
         >
           Cancel
         </Link>
@@ -60,7 +60,7 @@ function FieldControl({
   options: RelationOption[];
 }) {
   const base =
-    "mt-1.5 w-full border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10";
+    "mt-1.5 w-full border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10";
   const label = (
     <span className="text-sm font-medium text-zinc-800">
       {field.label}
@@ -87,7 +87,7 @@ function FieldControl({
 
   if (field.type === "checkbox") {
     return (
-      <label className="flex min-h-16 items-center gap-3 border border-zinc-200 bg-zinc-50 px-3 py-2">
+      <label className="flex min-h-16 items-center gap-3 border border-red-900/15 bg-[#fff7ed] px-3 py-2">
         <input
           name={field.name}
           type="checkbox"
@@ -138,8 +138,8 @@ function FieldControl({
     return (
       <label className="block md:col-span-2">
         {label}
-        <div className="mt-1.5 grid gap-4 border border-zinc-200 bg-zinc-50 p-3 sm:grid-cols-[9rem_1fr] sm:items-center">
-          <div className="flex aspect-square items-center justify-center overflow-hidden border border-zinc-200 bg-white text-xs font-medium text-zinc-400">
+        <div className="mt-1.5 grid gap-4 border border-red-900/15 bg-[#fff7ed] p-3 sm:grid-cols-[9rem_1fr] sm:items-center">
+          <div className="flex aspect-square items-center justify-center overflow-hidden border border-red-900/15 bg-white text-xs font-medium text-zinc-400">
             {imageUrl ? (
               <img
                 src={imageUrl}

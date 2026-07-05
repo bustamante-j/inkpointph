@@ -189,11 +189,11 @@ async function ProjectDetail({ id }: { id: string }) {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Amount</span>
-                      <input name="amount" type="number" min="0" step="0.01" required className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                      <input name="amount" type="number" min="0" step="0.01" required className="mt-1.5 h-10 w-full border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                     </label>
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Method</span>
-                      <select name="payment_method" className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10">
+                      <select name="payment_method" className="mt-1.5 h-10 w-full border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10">
                         <option value="cash">Cash</option>
                         <option value="gcash">GCash</option>
                         <option value="bank_transfer">Bank transfer</option>
@@ -202,16 +202,16 @@ async function ProjectDetail({ id }: { id: string }) {
                     </label>
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Date</span>
-                      <input name="payment_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                      <input name="payment_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1.5 h-10 w-full border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                     </label>
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Reference</span>
-                      <input name="reference_number" className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                      <input name="reference_number" className="mt-1.5 h-10 w-full border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                     </label>
                   </div>
                   <label className="block">
                     <span className="text-sm font-medium text-zinc-800">Notes</span>
-                    <textarea name="notes" rows={3} className="mt-1.5 w-full border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                    <textarea name="notes" rows={3} className="mt-1.5 w-full border border-red-900/20 bg-[#fffdf8] px-3 py-2 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                   </label>
                   <SubmitButton>Add payment</SubmitButton>
                 </form>
@@ -251,7 +251,7 @@ async function ProjectDetail({ id }: { id: string }) {
                 <input
                   name="note"
                   placeholder="Add internal timeline note"
-                  className="h-10 flex-1 border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+                  className="h-10 flex-1 border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
                 />
                 <SubmitButton>Add note</SubmitButton>
               </form>

@@ -79,6 +79,7 @@ export type ModuleKey =
   | "products"
   | "services"
   | "packages"
+  | "prices"
   | "logs";
 
 const statusOptions = (values: string[]) =>
@@ -577,6 +578,42 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       },
       money("starting_price", "Starting price"),
       { name: "is_available", label: "Available on public site", type: "checkbox" },
+      { name: "display_order", label: "Display order", type: "number", min: 0 },
+    ],
+  },
+  prices: {
+    key: "prices",
+    path: "prices",
+    table: "price_items",
+    title: "Prices",
+    singular: "Price Item",
+    description: "Manage the public price list shown on the website.",
+    select: "*",
+    orderBy: { column: "display_order", ascending: true },
+    searchFields: ["service_name", "unit_label", "category"],
+    creatable: true,
+    editable: true,
+    columns: [
+      { label: "Service", value: (row) => row.service_name },
+      { label: "Unit", value: (row) => row.unit_label },
+      { label: "Price", value: (row) => row.price_label },
+      { label: "Available", value: (row) => row.is_available, format: "boolean" },
+      { label: "Order", value: (row) => row.display_order },
+    ],
+    detailFields: [
+      { label: "Service", value: (row) => row.service_name },
+      { label: "Unit", value: (row) => row.unit_label },
+      { label: "Price", value: (row) => row.price_label },
+      { label: "Category", value: (row) => row.category },
+      { label: "Available", value: (row) => row.is_available, format: "boolean" },
+      { label: "Display order", value: (row) => row.display_order },
+    ],
+    formFields: [
+      { name: "service_name", label: "Service", type: "text", required: true },
+      { name: "unit_label", label: "Unit", type: "text", required: true },
+      { name: "price_label", label: "Price label", type: "text", required: true },
+      { name: "category", label: "Category", type: "text" },
+      { name: "is_available", label: "Show on public website", type: "checkbox" },
       { name: "display_order", label: "Display order", type: "number", min: 0 },
     ],
   },

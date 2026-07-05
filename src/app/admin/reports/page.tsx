@@ -46,10 +46,10 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       {!data.configured ? <Notice title="Supabase is not configured" tone="warning">Reports will calculate from live data after the database is connected.</Notice> : null}
       {data.error ? <Notice title="Reports issue" tone="warning">{data.error}</Notice> : null}
 
-      <form className="grid gap-3 border border-zinc-300 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:grid-cols-[1fr_1fr_auto_auto]">
-        <input name="from" type="date" defaultValue={filters.from} className="h-10 border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="From date" />
-        <input name="to" type="date" defaultValue={filters.to} className="h-10 border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="To date" />
-        <button className="h-10 bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-red-950">
+      <form className="grid gap-3 border border-red-900/20 bg-white p-4 shadow-sm shadow-red-950/5 sm:grid-cols-[1fr_1fr_auto_auto]">
+        <input name="from" type="date" defaultValue={filters.from} className="h-10 border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="From date" />
+        <input name="to" type="date" defaultValue={filters.to} className="h-10 border border-red-900/20 bg-[#fffdf8] px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="To date" />
+        <button className="h-10 bg-red-950 px-4 text-sm font-semibold text-white hover:bg-red-900">
           Apply dates
         </button>
         <ButtonLink href={`/admin/reports/export?${exportParams.toString()}`} variant="secondary">

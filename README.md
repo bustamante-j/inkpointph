@@ -5,7 +5,7 @@ Professional MVP website and admin management system for **InkPoint Prints & Ser
 The app has:
 
 - Public business website for services, packages, pricing, ordering steps, FAQ, and Messenger inquiries.
-- Admin-only dashboard for clients, projects/orders, payments, expenses, inventory, products with images, services/packages, reports, activity logs, and settings.
+- Admin-only dashboard for clients, projects/orders, payments, expenses, inventory, products with images, services/packages, public prices, reports, activity logs, and settings.
 - Supabase Auth, Supabase database schema, Row Level Security policy suggestions, and seed data.
 
 ## Stack
@@ -76,6 +76,7 @@ The schema creates:
 - `inventory_items`
 - `inventory_transactions`
 - `products`
+- `price_items`
 - `services`
 - `packages`
 - `activity_logs`
@@ -118,6 +119,7 @@ Admin:
 - `/admin/inventory`
 - `/admin/products`
 - `/admin/services`
+- `/admin/prices`
 - `/admin/reports`
 - `/admin/logs`
 - `/admin/settings`
@@ -130,6 +132,7 @@ Admin:
 - Ordering and file sending happen through Facebook Messenger.
 - Only the owner/admin signs in to the dashboard.
 - Product photos are uploaded by the admin in `/admin/products` and displayed on the public website.
+- Products, packages, services, and prices can be changed in the admin dashboard and will reflect on the public website.
 - Payments are manually recorded by the admin.
 - Projects/orders store timeline notes and relevant activity logs.
 - Payment totals update order `amount_paid`, `balance_due`, and `payment_status`.
@@ -159,7 +162,7 @@ If you already ran the original schema before product photo support was added, r
 -- supabase/product-images-migration.sql
 ```
 
-This adds the `products` table, product image storage bucket, and required policies without requiring seed data.
+This adds the `products` table, `price_items` table, product image storage bucket, and required policies without requiring seed data.
 
 ## Notes
 
