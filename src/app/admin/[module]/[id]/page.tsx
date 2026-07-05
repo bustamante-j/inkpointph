@@ -189,11 +189,11 @@ async function ProjectDetail({ id }: { id: string }) {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Amount</span>
-                      <input name="amount" type="number" min="0" step="0.01" required className="mt-1.5 h-10 w-full rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                      <input name="amount" type="number" min="0" step="0.01" required className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                     </label>
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Method</span>
-                      <select name="payment_method" className="mt-1.5 h-10 w-full rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10">
+                      <select name="payment_method" className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10">
                         <option value="cash">Cash</option>
                         <option value="gcash">GCash</option>
                         <option value="bank_transfer">Bank transfer</option>
@@ -202,16 +202,16 @@ async function ProjectDetail({ id }: { id: string }) {
                     </label>
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Date</span>
-                      <input name="payment_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1.5 h-10 w-full rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                      <input name="payment_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                     </label>
                     <label className="block">
                       <span className="text-sm font-medium text-zinc-800">Reference</span>
-                      <input name="reference_number" className="mt-1.5 h-10 w-full rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                      <input name="reference_number" className="mt-1.5 h-10 w-full border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                     </label>
                   </div>
                   <label className="block">
                     <span className="text-sm font-medium text-zinc-800">Notes</span>
-                    <textarea name="notes" rows={3} className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
+                    <textarea name="notes" rows={3} className="mt-1.5 w-full border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" />
                   </label>
                   <SubmitButton>Add payment</SubmitButton>
                 </form>
@@ -226,7 +226,7 @@ async function ProjectDetail({ id }: { id: string }) {
                 {result.payments.length ? (
                   <div className="space-y-3">
                     {result.payments.map((payment) => (
-                      <div key={String(payment.id)} className="flex items-center justify-between gap-4 rounded-md border border-zinc-100 p-3">
+                      <div key={String(payment.id)} className="flex items-center justify-between gap-4 border border-zinc-100 p-3">
                         <div>
                           <p className="font-semibold text-zinc-950">{formatCurrency(payment.amount as number)}</p>
                           <p className="text-xs text-zinc-500">{formatDate(String(payment.payment_date ?? ""))} - {String(payment.reference_number ?? "No reference")}</p>
@@ -251,7 +251,7 @@ async function ProjectDetail({ id }: { id: string }) {
                 <input
                   name="note"
                   placeholder="Add internal timeline note"
-                  className="h-10 flex-1 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+                  className="h-10 flex-1 border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
                 />
                 <SubmitButton>Add note</SubmitButton>
               </form>
@@ -259,7 +259,7 @@ async function ProjectDetail({ id }: { id: string }) {
                 <div className="space-y-4 border-l border-zinc-200 pl-4">
                   {timeline.map((item) => (
                     <div key={item.id} className="relative">
-                      <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-red-900 ring-4 ring-white" />
+                      <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 bg-red-900 ring-4 ring-white" />
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge value={item.type} />
                         <span className="text-xs text-zinc-500">{formatDateTime(item.created_at)}</span>
@@ -284,7 +284,7 @@ async function ProjectDetail({ id }: { id: string }) {
 
 function Amount({ label, value }: { label: string; value: unknown }) {
   return (
-    <div className="rounded-md bg-zinc-50 px-3 py-2">
+    <div className="bg-zinc-50 px-3 py-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
       <p className="mt-1 font-semibold text-zinc-950">{formatCurrency(value as number)}</p>
     </div>

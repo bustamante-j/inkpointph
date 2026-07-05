@@ -1,4 +1,3 @@
-import { Download, PackageSearch, PieChart, ReceiptText, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatCard } from "@/components/admin/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -47,23 +46,22 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       {!data.configured ? <Notice title="Supabase is not configured" tone="warning">Reports will calculate from live data after the database is connected.</Notice> : null}
       {data.error ? <Notice title="Reports issue" tone="warning">{data.error}</Notice> : null}
 
-      <form className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:grid-cols-[1fr_1fr_auto_auto]">
-        <input name="from" type="date" defaultValue={filters.from} className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="From date" />
-        <input name="to" type="date" defaultValue={filters.to} className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="To date" />
-        <button className="h-10 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-red-950">
+      <form className="grid gap-3 border border-zinc-300 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:grid-cols-[1fr_1fr_auto_auto]">
+        <input name="from" type="date" defaultValue={filters.from} className="h-10 border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="From date" />
+        <input name="to" type="date" defaultValue={filters.to} className="h-10 border border-zinc-300 px-3 text-sm outline-none focus:border-red-900 focus:ring-2 focus:ring-red-900/10" aria-label="To date" />
+        <button className="h-10 bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-red-950">
           Apply dates
         </button>
         <ButtonLink href={`/admin/reports/export?${exportParams.toString()}`} variant="secondary">
-          <Download className="h-4 w-4" aria-hidden="true" />
           CSV Export
         </ButtonLink>
       </form>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Daily / Date Sales" value={formatCurrency(totalSales)} detail="Sum of recorded payments in range" icon={<TrendingUp className="h-5 w-5" />} tone="dark" />
-        <StatCard label="Expense Report" value={formatCurrency(totalExpenses)} detail="Costs in range" icon={<ReceiptText className="h-5 w-5" />} />
-        <StatCard label="Net Profit" value={formatCurrency(netProfit)} detail="Total sales minus total expenses" icon={<PieChart className="h-5 w-5" />} tone="red" />
-        <StatCard label="Low Stock" value={lowStock.length} detail="Inventory / low stock report" icon={<PackageSearch className="h-5 w-5" />} />
+        <StatCard label="Sales" value={formatCurrency(totalSales)} detail="Recorded payments" tone="dark" />
+        <StatCard label="Expenses" value={formatCurrency(totalExpenses)} detail="Costs in range" />
+        <StatCard label="Net Profit" value={formatCurrency(netProfit)} detail="Sales minus expenses" tone="red" />
+        <StatCard label="Low Stock" value={lowStock.length} detail="Inventory alerts" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -106,9 +104,9 @@ function ReportCard({
                   <span className="font-medium text-zinc-700">{labelize(row.label)}</span>
                   <span className="text-zinc-500">{money ? formatCurrency(row.value) : row.value}</span>
                 </div>
-                <div className="h-2 rounded-full bg-zinc-100">
+                <div className="h-2 bg-zinc-100">
                   <div
-                    className="h-2 rounded-full bg-red-900"
+                    className="h-2 bg-red-900"
                     style={{ width: `${Math.max(5, (row.value / max) * 100)}%` }}
                   />
                 </div>
@@ -141,7 +139,7 @@ function RecordReport({
         {rows.length ? (
           <div className="space-y-3">
             {rows.slice(0, 8).map((row) => (
-              <div key={String(row.id ?? row.client_id)} className="flex items-center justify-between gap-4 rounded-md border border-zinc-100 p-3">
+              <div key={String(row.id ?? row.client_id)} className="flex items-center justify-between gap-4 border border-zinc-100 p-3">
                 <div>
                   <p className="text-sm font-semibold text-zinc-950">
                     {String(row.order_number ?? row.full_name ?? row.item_name ?? row.service_type ?? "Record")}

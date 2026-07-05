@@ -3,8 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --brand-red: #7f1d1d;
-  --brand-red-muted: #991b1b;
+  --brand-red: #7f1017;
+  --brand-red-muted: #a31320;
+  --brand-dark: #18181b;
   --surface: #f4f4f5;
 }
 
@@ -28,4 +29,16 @@ body {
 
 html {
   scroll-behavior: smooth;
+}
+
+button,
+input,
+select,
+textarea,
+a {
+  border-radius: 0;
+}
+
+.sharp-surface {
+  border-radius: 0;
 }

@@ -237,7 +237,10 @@ async function buildPayload(moduleKey: ModuleKey, formData: FormData, id?: strin
   const payload: AnyRecord = {};
 
   for (const field of config.formFields) {
-    payload[field.name] = parseFieldValue(field, formData);
+    const value = await parseFieldValue(field, formData);
+    if (value !== undefined) {
+      payload[field.name] = value;
+    }
   }
 
   if (moduleKey === "projects") {
@@ -275,8 +278,12 @@ async function buildPayload(moduleKey: ModuleKey, formData: FormData, id?: strin
   return payload;
 }
 
-function parseFieldValue(field: FieldConfig, formData: FormData) {
+async function parseFieldValue(field: FieldConfig, formData: FormData) {
   const rawValue = formData.get(field.name);
+
+  if (field.type === "image") {
+    return uploadImageField(field, rawValue);
+  }
 
   if (field.required && (rawValue === null || String(rawValue).trim() === "")) {
     throw new Error(`${field.label} is required.`);
@@ -292,6 +299,65 @@ function parseFieldValue(field: FieldConfig, formData: FormData) {
   }
 
   return emptyToNull(rawValue);
+}
+
+async function uploadImageField(
+  field: FieldConfig,
+  rawValue: FormDataEntryValue | null,
+) {
+  if (!isUploadedFile(rawValue) || rawValue.size === 0) return undefined;
+
+  if (!rawValue.type.startsWith("image/")) {
+    throw new Error(`${field.label} must be an image file.`);
+  }
+
+  const maxSizeMb = field.maxSizeMb ?? 5;
+  const maxBytes = maxSizeMb * 1024 * 1024;
+  if (rawValue.size > maxBytes) {
+    throw new Error(`${field.label} must be ${maxSizeMb} MB or smaller.`);
+  }
+
+  const supabase = await requireSupabaseServerClient();
+  const bucket = field.storageBucket ?? "product-images";
+  const extension = getImageExtension(rawValue);
+  const objectPath = `products/${crypto.randomUUID()}.${extension}`;
+
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(objectPath, rawValue, {
+      cacheControl: "31536000",
+      contentType: rawValue.type,
+      upsert: false,
+    });
+
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+  return data.publicUrl;
+}
+
+function isUploadedFile(value: FormDataEntryValue | null): value is File {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "arrayBuffer" in value &&
+    "name" in value &&
+    "size" in value &&
+    "type" in value
+  );
+}
+
+function getImageExtension(file: File) {
+  const byType = file.type.split("/")[1]?.toLowerCase();
+  if (byType === "jpeg") return "jpg";
+  if (byType && ["png", "jpg", "webp", "gif"].includes(byType)) return byType;
+
+  const byName = file.name.split(".").pop()?.toLowerCase();
+  if (byName && ["png", "jpg", "jpeg", "webp", "gif"].includes(byName)) {
+    return byName === "jpeg" ? "jpg" : byName;
+  }
+
+  return "png";
 }
 
 function emptyToNull(value: FormDataEntryValue | null) {
@@ -381,6 +447,7 @@ function getRecordLabel(moduleKey: ModuleKey, record: AnyRecord) {
   if (moduleKey === "payments") return String(record.reference_number ?? "payment");
   if (moduleKey === "expenses") return String(record.expense_name ?? "expense");
   if (moduleKey === "inventory") return String(record.item_name ?? "inventory item");
+  if (moduleKey === "products") return String(record.name ?? "product");
   if (moduleKey === "services") return String(record.name ?? "service");
   if (moduleKey === "packages") return String(record.name ?? "package");
   return String(record.id ?? "record");

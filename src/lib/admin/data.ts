@@ -335,13 +335,13 @@ export async function fetchReportData(filters: AdminFilters = {}) {
 
 export async function getPublicCatalog() {
   if (!isSupabaseConfigured()) {
-    return { services: null, packages: null };
+    return { services: null, packages: null, products: null };
   }
 
   const supabase = await createSupabaseServerClient();
-  if (!supabase) return { services: null, packages: null };
+  if (!supabase) return { services: null, packages: null, products: null };
 
-  const [services, packages] = await Promise.all([
+  const [services, packages, products] = await Promise.all([
     supabase
       .from("services")
       .select("name,description,starting_price,category,display_order")
@@ -352,11 +352,17 @@ export async function getPublicCatalog() {
       .select("name,description,starting_price,display_order")
       .eq("is_available", true)
       .order("display_order", { ascending: true }),
+    supabase
+      .from("products")
+      .select("name,description,starting_price,category,image_url,display_order")
+      .eq("is_available", true)
+      .order("display_order", { ascending: true }),
   ]);
 
   return {
     services: services.error ? null : services.data,
     packages: packages.error ? null : packages.data,
+    products: products.error ? null : products.data,
   };
 }
 

@@ -20,6 +20,13 @@ values
   ('Small Business Starter Package', 'Labels, QR prints, and basic print materials for small sellers.', array['Business Labels & Stickers', 'GCash QR Printing'], 150, true, 6)
 on conflict do nothing;
 
+insert into public.products (name, description, starting_price, category, is_available, display_order)
+values
+  ('Sticker Sheets', 'Custom sticker sheets for labels, packaging, gifts, and small business branding.', 60, 'Stickers', true, 1),
+  ('Photo Prints', 'Clean photo prints from customer-provided files, ready for pickup.', 20, 'Photo', true, 2),
+  ('Laminated Documents', 'Protected cards, certificates, IDs, and important everyday documents.', 20, 'Finishing', true, 3)
+on conflict do nothing;
+
 with inserted_clients as (
   insert into public.clients (full_name, phone_number, messenger_name, email, address_or_landmark, notes, status)
   values

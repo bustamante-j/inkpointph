@@ -15,10 +15,10 @@ export function StatCard({
   tone?: "default" | "red" | "dark";
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-4">
+    <Card className="border-zinc-300">
+      <CardContent className="flex items-start justify-between gap-4 p-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
             {label}
           </p>
           <p className="mt-2 text-2xl font-semibold text-zinc-950">{value}</p>
@@ -27,7 +27,7 @@ export function StatCard({
         {icon ? (
           <div
             className={cn(
-              "rounded-md p-2",
+              "border p-2",
               tone === "red" && "bg-red-50 text-red-900",
               tone === "dark" && "bg-zinc-950 text-white",
               tone === "default" && "bg-zinc-100 text-zinc-700",

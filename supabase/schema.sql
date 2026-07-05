@@ -105,6 +105,19 @@ create table if not exists public.inventory_transactions (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  starting_price numeric not null default 0,
+  category text,
+  image_url text,
+  is_available boolean not null default true,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -139,7 +152,7 @@ create table if not exists public.activity_logs (
   )),
   module text not null check (module in (
     'clients', 'projects', 'projects_orders', 'payments', 'expenses',
-    'inventory', 'inventory_items', 'services', 'packages', 'reports',
+    'inventory', 'inventory_items', 'products', 'services', 'packages', 'reports',
     'settings', 'authentication'
   )),
   record_id uuid,
@@ -187,6 +200,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists set_inventory_items_updated_at on public.inventory_items;
 create trigger set_inventory_items_updated_at
 before update on public.inventory_items
+for each row execute function public.set_updated_at();
+
+drop trigger if exists set_products_updated_at on public.products;
+create trigger set_products_updated_at
+before update on public.products
 for each row execute function public.set_updated_at();
 
 drop trigger if exists set_services_updated_at on public.services;
@@ -309,6 +327,7 @@ alter table public.payments enable row level security;
 alter table public.expenses enable row level security;
 alter table public.inventory_items enable row level security;
 alter table public.inventory_transactions enable row level security;
+alter table public.products enable row level security;
 alter table public.services enable row level security;
 alter table public.packages enable row level security;
 alter table public.activity_logs enable row level security;
@@ -366,6 +385,17 @@ for all to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "products_public_available_read" on public.products;
+create policy "products_public_available_read" on public.products
+for select to anon, authenticated
+using (is_available = true or public.is_admin());
+
+drop policy if exists "products_admin_write" on public.products;
+create policy "products_admin_write" on public.products
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
 drop policy if exists "services_public_available_read" on public.services;
 create policy "services_public_available_read" on public.services
 for select to anon, authenticated
@@ -407,3 +437,38 @@ create index if not exists idx_payments_order_id on public.payments(order_id);
 create index if not exists idx_expenses_expense_date on public.expenses(expense_date);
 create index if not exists idx_activity_logs_created_at on public.activity_logs(created_at desc);
 create index if not exists idx_order_timeline_entries_order_id on public.order_timeline_entries(order_id);
+create index if not exists idx_products_display_order on public.products(display_order);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'product-images',
+  'product-images',
+  true,
+  5242880,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "product_images_public_read" on storage.objects;
+create policy "product_images_public_read" on storage.objects
+for select to anon, authenticated
+using (bucket_id = 'product-images');
+
+drop policy if exists "product_images_admin_insert" on storage.objects;
+create policy "product_images_admin_insert" on storage.objects
+for insert to authenticated
+with check (bucket_id = 'product-images' and public.is_admin());
+
+drop policy if exists "product_images_admin_update" on storage.objects;
+create policy "product_images_admin_update" on storage.objects
+for update to authenticated
+using (bucket_id = 'product-images' and public.is_admin())
+with check (bucket_id = 'product-images' and public.is_admin());
+
+drop policy if exists "product_images_admin_delete" on storage.objects;
+create policy "product_images_admin_delete" on storage.objects
+for delete to authenticated
+using (bucket_id = 'product-images' and public.is_admin());

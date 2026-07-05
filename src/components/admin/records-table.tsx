@@ -30,7 +30,7 @@ export function RecordsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-950/5">
+    <div className="overflow-hidden border border-zinc-300 bg-white shadow-sm shadow-zinc-950/5">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-zinc-200 text-sm">
           <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -45,11 +45,13 @@ export function RecordsTable({
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {rows.map((row) => (
-              <tr key={String(row.id)} className="hover:bg-zinc-50/80">
+              <tr key={String(row.id)} className="hover:bg-red-50/40">
                 {config.columns.map((column) => (
                   <td key={column.label} className="max-w-xs px-4 py-3 text-zinc-700">
                     {column.format === "status" ? (
                       <Badge value={String(column.value(row) ?? "")} />
+                    ) : column.format === "image" ? (
+                      <ImageCell value={column.value(row)} />
                     ) : (
                       <span className="line-clamp-2">{formatColumnValue(column, row)}</span>
                     )}
@@ -68,7 +70,7 @@ export function RecordsTable({
                     {config.archiveValue ? (
                       <form action={archiveRecordAction.bind(null, config.key as ModuleKey, String(row.id))}>
                         <button
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-red-900"
+                          className="inline-flex h-8 w-8 items-center justify-center border border-transparent text-zinc-500 hover:border-zinc-200 hover:bg-zinc-100 hover:text-red-900"
                           aria-label="Archive"
                           title="Archive"
                         >
@@ -78,7 +80,7 @@ export function RecordsTable({
                     ) : config.hardDelete ? (
                       <form action={hardDeleteRecordAction.bind(null, config.key as ModuleKey, String(row.id))}>
                         <button
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-rose-50 hover:text-rose-700"
+                          className="inline-flex h-8 w-8 items-center justify-center border border-transparent text-zinc-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                           aria-label="Delete"
                           title="Delete"
                         >
@@ -97,6 +99,20 @@ export function RecordsTable({
   );
 }
 
+function ImageCell({ value }: { value: unknown }) {
+  const imageUrl = typeof value === "string" && value ? value : "";
+
+  return (
+    <div className="flex h-12 w-12 items-center justify-center overflow-hidden border border-zinc-200 bg-zinc-50 text-[10px] font-medium uppercase text-zinc-400">
+      {imageUrl ? (
+        <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+      ) : (
+        "None"
+      )}
+    </div>
+  );
+}
+
 function IconLink({
   href,
   label,
@@ -109,7 +125,7 @@ function IconLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-red-900"
+      className="inline-flex h-8 w-8 items-center justify-center border border-transparent text-zinc-500 hover:border-zinc-200 hover:bg-zinc-100 hover:text-red-900"
       aria-label={label}
       title={label}
     >

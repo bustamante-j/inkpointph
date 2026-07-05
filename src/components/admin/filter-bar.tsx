@@ -11,21 +11,21 @@ export function FilterBar({
   filters: AdminFilters;
 }) {
   return (
-    <form className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
+    <form className="grid gap-3 border border-zinc-300 bg-white p-4 shadow-sm shadow-zinc-950/5 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
       <label className="relative block">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
         <input
           name="q"
           defaultValue={filters.q}
           placeholder={`Search ${config.title.toLowerCase()}`}
-          className="h-10 w-full rounded-md border border-zinc-300 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+          className="h-10 w-full border border-zinc-300 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
         />
       </label>
       {config.statusField ? (
         <select
           name="status"
           defaultValue={filters.status}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+          className="h-10 border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
         >
           <option value="">All statuses</option>
           {statusChoices(config.statusField).map((status) => (
@@ -41,7 +41,7 @@ export function FilterBar({
         <select
           name="payment"
           defaultValue={filters.payment}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+          className="h-10 border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
         >
           <option value="">All payments</option>
           {["unpaid", "partial", "paid", "refunded"].map((status) => (
@@ -54,7 +54,7 @@ export function FilterBar({
         <select
           name="service"
           defaultValue={filters.service}
-          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+          className="h-10 border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
         >
           <option value="">All services</option>
           {serviceTypeOptions.map((service) => (
@@ -72,21 +72,21 @@ export function FilterBar({
             name="from"
             type="date"
             defaultValue={filters.from}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+            className="h-10 border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
             aria-label="From date"
           />
           <input
             name="to"
             type="date"
             defaultValue={filters.to}
-            className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
+            className="h-10 border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-red-900 focus:ring-2 focus:ring-red-900/10"
             aria-label="To date"
           />
         </div>
       ) : (
         <span className="hidden md:block" />
       )}
-      <button className="h-10 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-red-950">
+      <button className="h-10 bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-red-950">
         Apply
       </button>
     </form>

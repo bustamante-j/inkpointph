@@ -5,7 +5,7 @@ Professional MVP website and admin management system for **InkPoint Prints & Ser
 The app has:
 
 - Public business website for services, packages, pricing, ordering steps, FAQ, and Messenger inquiries.
-- Admin-only dashboard for clients, projects/orders, payments, expenses, inventory, services/packages, reports, activity logs, and settings.
+- Admin-only dashboard for clients, projects/orders, payments, expenses, inventory, products with images, services/packages, reports, activity logs, and settings.
 - Supabase Auth, Supabase database schema, Row Level Security policy suggestions, and seed data.
 
 ## Stack
@@ -75,10 +75,13 @@ The schema creates:
 - `expenses`
 - `inventory_items`
 - `inventory_transactions`
+- `products`
 - `services`
 - `packages`
 - `activity_logs`
 - `order_timeline_entries`
+
+The schema also creates a public Supabase Storage bucket named `product-images` with policies that let admins upload product photos and let visitors view those public product images.
 
 Private admin tables have RLS enabled. Public reads are allowed only for available `services` and `packages`.
 
@@ -113,6 +116,7 @@ Admin:
 - `/admin/payments`
 - `/admin/expenses`
 - `/admin/inventory`
+- `/admin/products`
 - `/admin/services`
 - `/admin/reports`
 - `/admin/logs`
@@ -124,6 +128,8 @@ Admin:
 - Customers do not create accounts.
 - Customers do not upload files through the website.
 - Ordering and file sending happen through Facebook Messenger.
+- Only the owner/admin signs in to the dashboard.
+- Product photos are uploaded by the admin in `/admin/products` and displayed on the public website.
 - Payments are manually recorded by the admin.
 - Projects/orders store timeline notes and relevant activity logs.
 - Payment totals update order `amount_paid`, `balance_due`, and `payment_status`.
@@ -144,6 +150,16 @@ https://your-production-domain.com/**
 
 5. Run the Supabase schema in the production Supabase project.
 6. Create the production owner account and profile row.
+
+## Updating an Existing Supabase Database
+
+If you already ran the original schema before product photo support was added, run:
+
+```sql
+-- supabase/product-images-migration.sql
+```
+
+This adds the `products` table, product image storage bucket, and required policies without requiring seed data.
 
 ## Notes
 

@@ -1,6 +1,7 @@
 import {
   expenseCategories,
   inventoryCategories,
+  productCategories,
   serviceTypeOptions,
 } from "@/lib/constants";
 import { formatCurrency, formatDate, formatDateTime, labelize } from "@/lib/utils";
@@ -16,7 +17,8 @@ export type FieldType =
   | "textarea"
   | "select"
   | "checkbox"
-  | "multiline";
+  | "multiline"
+  | "image";
 
 export type FieldConfig = {
   name: string;
@@ -35,12 +37,15 @@ export type FieldConfig = {
   min?: number;
   step?: string;
   help?: string;
+  accept?: string;
+  storageBucket?: string;
+  maxSizeMb?: number;
 };
 
 export type ColumnConfig = {
   label: string;
   value: (row: AnyRecord) => unknown;
-  format?: "text" | "money" | "date" | "datetime" | "status" | "boolean";
+  format?: "text" | "money" | "date" | "datetime" | "status" | "boolean" | "image";
 };
 
 export type ModuleConfig = {
@@ -71,6 +76,7 @@ export type ModuleKey =
   | "payments"
   | "expenses"
   | "inventory"
+  | "products"
   | "services"
   | "packages"
   | "logs";
@@ -443,6 +449,61 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "notes", label: "Notes", type: "textarea" },
     ],
   },
+  products: {
+    key: "products",
+    path: "products",
+    table: "products",
+    title: "Products",
+    singular: "Product",
+    description: "Manage public product photos, descriptions, pricing, and availability.",
+    select: "*",
+    orderBy: { column: "display_order", ascending: true },
+    searchFields: ["name", "description", "category"],
+    creatable: true,
+    editable: true,
+    columns: [
+      { label: "Image", value: (row) => row.image_url, format: "image" },
+      { label: "Product", value: (row) => row.name },
+      { label: "Category", value: (row) => row.category, format: "status" },
+      { label: "Starting price", value: (row) => row.starting_price, format: "money" },
+      { label: "Available", value: (row) => row.is_available, format: "boolean" },
+      { label: "Order", value: (row) => row.display_order },
+    ],
+    detailFields: [
+      { label: "Image", value: (row) => row.image_url, format: "image" },
+      { label: "Name", value: (row) => row.name },
+      { label: "Description", value: (row) => row.description },
+      { label: "Starting price", value: (row) => row.starting_price, format: "money" },
+      { label: "Category", value: (row) => row.category, format: "status" },
+      { label: "Available", value: (row) => row.is_available, format: "boolean" },
+      { label: "Display order", value: (row) => row.display_order },
+    ],
+    formFields: [
+      {
+        name: "image_url",
+        label: "Product image",
+        type: "image",
+        accept: "image/png,image/jpeg,image/webp,image/gif",
+        storageBucket: "product-images",
+        maxSizeMb: 5,
+        help: "Upload a clear product photo. PNG, JPG, WebP, or GIF up to 5 MB.",
+      },
+      { name: "name", label: "Name", type: "text", required: true },
+      { name: "description", label: "Description", type: "textarea" },
+      {
+        name: "category",
+        label: "Category",
+        type: "select",
+        options: productCategories.map((category) => ({
+          value: category,
+          label: category,
+        })),
+      },
+      money("starting_price", "Starting price"),
+      { name: "is_available", label: "Available on public site", type: "checkbox" },
+      { name: "display_order", label: "Display order", type: "number", min: 0 },
+    ],
+  },
   services: {
     key: "services",
     path: "services",
@@ -565,6 +626,7 @@ export function formatColumnValue(column: ColumnConfig, row: AnyRecord) {
   if (column.format === "date") return formatDate(value as string);
   if (column.format === "datetime") return formatDateTime(value as string);
   if (column.format === "boolean") return value ? "Yes" : "No";
+  if (column.format === "image") return value ? "Image uploaded" : "No image";
   if (Array.isArray(value)) return value.join(", ");
   return value === null || value === undefined || value === "" ? "Not set" : String(value);
 }

@@ -62,7 +62,7 @@ export default function SettingsPage() {
               "Run the schema policies before adding private business data.",
               "Review Activity Logs after sensitive changes.",
             ].map((item) => (
-              <div key={item} className="flex gap-3 rounded-md border border-zinc-100 p-3">
+              <div key={item} className="flex gap-3 border border-zinc-100 p-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-red-900" aria-hidden="true" />
                 <span>{item}</span>
               </div>

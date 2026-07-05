@@ -141,6 +141,30 @@ export const defaultPackages = [
   },
 ];
 
+export const defaultProducts = [
+  {
+    name: "Sticker Sheets",
+    description: "Custom sticker sheets for labels, packaging, gifts, and small business branding.",
+    starting_price: "Starting price",
+    category: "Stickers",
+    image_url: null,
+  },
+  {
+    name: "Photo Prints",
+    description: "Clean photo prints from customer-provided files, ready for pickup.",
+    starting_price: "Starting price",
+    category: "Photo",
+    image_url: null,
+  },
+  {
+    name: "Laminated Documents",
+    description: "Protected cards, certificates, IDs, and important everyday documents.",
+    starting_price: "Starting price",
+    category: "Finishing",
+    image_url: null,
+  },
+];
+
 export const priceRows = [
   ["Black and white document", "Short / A4", "PHP 2.00+"],
   ["Colored document", "Short / A4", "PHP 10.00+"],
@@ -236,4 +260,15 @@ export const inventoryCategories = [
   "Folders",
   "Packaging",
   "Other Supplies",
+];
+
+export const productCategories = [
+  "Documents",
+  "Stickers",
+  "Photo",
+  "Finishing",
+  "School",
+  "Business",
+  "Events",
+  "Custom",
 ];
