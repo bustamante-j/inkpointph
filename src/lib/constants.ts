@@ -12,7 +12,7 @@ export const business = {
   facebookName: "InkPoint Prints and Services",
   email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "inkpointprints@gmail.com",
   phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "To follow",
-  website: process.env.NEXT_PUBLIC_WEBSITE_URL || "https://yourwebsite.com",
+  website: process.env.NEXT_PUBLIC_WEBSITE_URL || "To follow",
   addressNote: "Exact shop address to follow.",
   hours: "8:00 AM - 10:00 PM daily",
   hoursNote: "Except when the shopkeeper has classes.",

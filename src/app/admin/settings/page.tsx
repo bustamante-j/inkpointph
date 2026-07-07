@@ -11,10 +11,10 @@ const settings = [
   ["Business name", business.name],
   ["Location", business.location],
   ["Motto", business.motto],
-  ["Website", "yourwebsite.com"],
+  ["Website", business.website],
   ["Email", business.email],
   ["Phone", business.phone],
-  ["Messenger", "m.me/yourpage"],
+  ["Messenger", business.messenger],
   ["Payments", "Cash and GCash accepted"],
 ];
 
