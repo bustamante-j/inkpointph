@@ -98,11 +98,11 @@ export default async function Home() {
             <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-red-950">
               <a href={business.messenger} className="inline-flex items-center gap-2 border border-red-900/20 px-3 py-2 hover:border-red-900">
                 <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                InkPoint, prints and services
+                InkPoint Prints and Services
               </a>
               <a href={business.messenger} className="inline-flex items-center gap-2 border border-red-900/20 px-3 py-2 hover:border-red-900">
                 <span className="flex h-4 w-4 items-center justify-center bg-red-900 text-[11px] font-black text-white">f</span>
-                InkPoint, prints and services
+                InkPoint Prints and Services
               </a>
             </div>
           </div>
