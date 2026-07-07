@@ -187,6 +187,10 @@ export async function fetchDashboardData() {
   const emptySummary: DashboardSummary = {
     totalClients: 0,
     totalProjects: 0,
+    totalOnlineOrders: 0,
+    pendingOnlineOrders: 0,
+    workingOnlineOrders: 0,
+    readyOnlineOrders: 0,
     pendingOrders: 0,
     inProgressOrders: 0,
     readyForPickupOrders: 0,
@@ -204,6 +208,7 @@ export async function fetchDashboardData() {
       configured: false,
       summary: emptySummary,
       recentProjects: [] as AnyRecord[],
+      recentOnlineOrders: [] as AnyRecord[],
       recentClients: [] as AnyRecord[],
       recentLogs: [] as AnyRecord[],
       lowStock: [] as AnyRecord[],
@@ -215,8 +220,13 @@ export async function fetchDashboardData() {
   const todayKey = today.toISOString().slice(0, 10);
   const monthKey = today.toISOString().slice(0, 7);
 
-  const [clients, projects, payments, expenses, inventory, logs] = await Promise.all([
+  const [clients, onlineOrders, projects, payments, expenses, inventory, logs] = await Promise.all([
     supabase.from("clients").select("*").neq("status", "archived").limit(1000),
+    supabase
+      .from("online_orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1000),
     supabase
       .from("projects_orders")
       .select("*, clients(full_name)")
@@ -236,6 +246,7 @@ export async function fetchDashboardData() {
       .limit(8),
   ]);
 
+  const onlineOrderRows = asRows(onlineOrders.data);
   const projectRows = asRows(projects.data);
   const paymentRows = asRows(payments.data);
   const expenseRows = asRows(expenses.data);
@@ -246,6 +257,10 @@ export async function fetchDashboardData() {
   const summary: DashboardSummary = {
     totalClients: clients.data?.length ?? 0,
     totalProjects: projectRows.length,
+    totalOnlineOrders: onlineOrderRows.length,
+    pendingOnlineOrders: countWhere(onlineOrderRows, "order_status", "pending"),
+    workingOnlineOrders: countWhere(onlineOrderRows, "order_status", "working_on_it"),
+    readyOnlineOrders: countWhere(onlineOrderRows, "order_status", "ready_for_pickup"),
     pendingOrders: countWhere(projectRows, "order_status", "pending"),
     inProgressOrders: countWhere(projectRows, "order_status", "in_progress"),
     readyForPickupOrders: countWhere(projectRows, "order_status", "ready_for_pickup"),
@@ -264,11 +279,13 @@ export async function fetchDashboardData() {
     configured: true,
     summary,
     recentProjects: projectRows.slice(0, 8),
+    recentOnlineOrders: onlineOrderRows.slice(0, 8),
     recentClients: asRows(clients.data).slice(0, 8),
     recentLogs: asRows(logs.data),
     lowStock: asRows(inventory.data),
     error:
       clients.error?.message ??
+      onlineOrders.error?.message ??
       projects.error?.message ??
       payments.error?.message ??
       expenses.error?.message ??

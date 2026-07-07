@@ -11,6 +11,10 @@ export type AnyRecord = Record<string, unknown>;
 export type DashboardSummary = {
   totalClients: number;
   totalProjects: number;
+  totalOnlineOrders: number;
+  pendingOnlineOrders: number;
+  workingOnlineOrders: number;
+  readyOnlineOrders: number;
   pendingOrders: number;
   inProgressOrders: number;
   readyForPickupOrders: number;

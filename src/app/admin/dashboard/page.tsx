@@ -29,7 +29,13 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Clients" value={summary.totalClients} />
-        <StatCard label="Orders" value={summary.totalProjects} />
+        <StatCard
+          label="Online orders"
+          value={summary.totalOnlineOrders}
+          detail={`${summary.pendingOnlineOrders} pending`}
+          tone="red"
+        />
+        <StatCard label="Projects" value={summary.totalProjects} />
         <StatCard label="Monthly sales" value={formatCurrency(summary.monthlySales)} tone="dark" />
         <StatCard label="Low stock" value={summary.lowStockItems} tone="red" />
       </div>
@@ -37,10 +43,47 @@ export default async function DashboardPage() {
       <DashboardGraphs
         summary={summary}
         recentProjects={data.recentProjects}
+        recentOnlineOrders={data.recentOnlineOrders}
         lowStock={data.lowStock}
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
+        <Card className="border-zinc-300">
+          <CardHeader className="p-4">
+            <h2 className="text-sm font-black uppercase tracking-wide text-zinc-950">
+              Recent Online Orders
+            </h2>
+          </CardHeader>
+          <CardContent className="p-4">
+            {data.recentOnlineOrders.length ? (
+              <div className="space-y-2">
+                {data.recentOnlineOrders.map((order) => (
+                  <div
+                    key={String(order.id)}
+                    className="grid grid-cols-[1fr_auto] gap-4 border border-zinc-200 p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-950">
+                        {String(order.customer_name ?? "Online customer")}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {String(order.service_type ?? "Service")} -{" "}
+                        {String(order.contact_number ?? "No contact")}
+                      </p>
+                    </div>
+                    <Badge value={String(order.order_status ?? "")} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No online orders yet"
+                description="Public booking requests will appear here."
+              />
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="border-zinc-300">
           <CardHeader className="p-4">
             <h2 className="text-sm font-black uppercase tracking-wide text-zinc-950">

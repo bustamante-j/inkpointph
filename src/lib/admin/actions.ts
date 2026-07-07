@@ -443,6 +443,7 @@ async function logActivity(log: {
 
 function getRecordLabel(moduleKey: ModuleKey, record: AnyRecord) {
   if (moduleKey === "clients") return String(record.full_name ?? "client");
+  if (moduleKey === "onlineOrders") return String(record.customer_name ?? "online order");
   if (moduleKey === "projects") return String(record.order_number ?? record.title ?? "order");
   if (moduleKey === "payments") return String(record.reference_number ?? "payment");
   if (moduleKey === "expenses") return String(record.expense_name ?? "expense");

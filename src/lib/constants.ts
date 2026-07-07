@@ -5,10 +5,18 @@ export const business = {
   description:
     "Reliable printing, document, sticker, and photo print services for students, job seekers, small businesses, and nearby residents.",
   messenger:
-    process.env.NEXT_PUBLIC_MESSENGER_LINK || "https://m.me/yourpage",
-  email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "youremail@email.com",
-  phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "0912 345 6789",
+    process.env.NEXT_PUBLIC_MESSENGER_LINK || "https://m.me/inkpointprints",
+  facebook:
+    process.env.NEXT_PUBLIC_FACEBOOK_PAGE ||
+    "https://web.facebook.com/people/InkPoint-Prints-Services/61590990023674/",
+  facebookName: "InkPoint Prints and Services",
+  email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "inkpointprints@gmail.com",
+  phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "To follow",
   website: process.env.NEXT_PUBLIC_WEBSITE_URL || "https://yourwebsite.com",
+  addressNote: "Exact shop address to follow.",
+  hours: "8:00 AM - 10:00 PM daily",
+  hoursNote: "Except when the shopkeeper has classes.",
+  paymentNote: "Online orders are payment-first. GCash details to follow.",
 };
 
 export const defaultServices = [
@@ -177,11 +185,11 @@ export const priceRows = [
 ];
 
 export const orderSteps = [
-  "Message us on Messenger.",
-  "Send your file and order details.",
+  "Send your order details.",
   "Wait for price confirmation.",
-  "Pay through Cash or GCash.",
-  "Pick up your order once ready.",
+  "Pay first for online orders.",
+  "We prepare your prints.",
+  "Pick up or arrange delivery.",
 ];
 
 export const faqItems = [

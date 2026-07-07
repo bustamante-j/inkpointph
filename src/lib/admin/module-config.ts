@@ -72,6 +72,7 @@ export type ModuleConfig = {
 
 export type ModuleKey =
   | "clients"
+  | "onlineOrders"
   | "projects"
   | "payments"
   | "expenses"
@@ -143,6 +144,61 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
         type: "select",
         options: statusOptions(["active", "inactive", "archived"]),
       },
+    ],
+  },
+  onlineOrders: {
+    key: "onlineOrders",
+    path: "online-orders",
+    table: "online_orders",
+    title: "Online Orders",
+    singular: "Online Order",
+    description: "Review public booking requests and update customer order status.",
+    select: "*",
+    orderBy: { column: "created_at", ascending: false },
+    searchFields: ["customer_name", "contact_number", "messenger_name", "service_type", "order_details"],
+    statusField: "order_status",
+    dateField: "created_at",
+    creatable: false,
+    editable: true,
+    columns: [
+      { label: "Customer", value: (row) => row.customer_name },
+      { label: "Service", value: (row) => row.service_type },
+      { label: "Qty", value: (row) => row.quantity },
+      { label: "Status", value: (row) => row.order_status, format: "status" },
+      { label: "Needed", value: (row) => row.needed_by, format: "date" },
+      { label: "Created", value: (row) => row.created_at, format: "date" },
+    ],
+    detailFields: [
+      { label: "Customer", value: (row) => row.customer_name },
+      { label: "Contact number", value: (row) => row.contact_number },
+      { label: "Messenger name", value: (row) => row.messenger_name },
+      { label: "Email", value: (row) => row.email },
+      { label: "Service", value: (row) => row.service_type },
+      { label: "Order details", value: (row) => row.order_details },
+      { label: "Quantity", value: (row) => row.quantity },
+      { label: "Needed by", value: (row) => row.needed_by, format: "date" },
+      { label: "Pickup / delivery", value: (row) => row.pickup_or_delivery, format: "status" },
+      { label: "Payment method", value: (row) => row.payment_method, format: "status" },
+      { label: "Payment reference", value: (row) => row.payment_reference },
+      { label: "Payment note", value: (row) => row.payment_note },
+      { label: "Order status", value: (row) => row.order_status, format: "status" },
+      { label: "Admin notes", value: (row) => row.admin_notes },
+      { label: "Created", value: (row) => row.created_at, format: "datetime" },
+    ],
+    formFields: [
+      {
+        name: "order_status",
+        label: "Order status",
+        type: "select",
+        options: statusOptions([
+          "pending",
+          "working_on_it",
+          "ready_for_pickup",
+          "completed",
+          "cancelled",
+        ]),
+      },
+      { name: "admin_notes", label: "Admin notes", type: "textarea" },
     ],
   },
   projects: {
@@ -653,7 +709,10 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
 export const moduleKeys = Object.keys(moduleConfigs) as ModuleKey[];
 
 export function getModuleConfig(module: string): ModuleConfig | undefined {
-  return moduleConfigs[module as ModuleKey];
+  return (
+    moduleConfigs[module as ModuleKey] ??
+    moduleKeys.map((key) => moduleConfigs[key]).find((config) => config.path === module)
+  );
 }
 
 export function formatColumnValue(column: ColumnConfig, row: AnyRecord) {

@@ -11,12 +11,20 @@ type ChartRow = {
 export function DashboardGraphs({
   summary,
   recentProjects,
+  recentOnlineOrders,
   lowStock,
 }: {
   summary: DashboardSummary;
   recentProjects: AnyRecord[];
+  recentOnlineOrders: AnyRecord[];
   lowStock: AnyRecord[];
 }) {
+  const onlineOrderRows: ChartRow[] = [
+    { label: "Pending", value: summary.pendingOnlineOrders, tone: "muted" },
+    { label: "Working", value: summary.workingOnlineOrders, tone: "dark" },
+    { label: "Ready", value: summary.readyOnlineOrders, tone: "red" },
+  ];
+
   const orderRows: ChartRow[] = [
     { label: "Pending", value: summary.pendingOrders, tone: "muted" },
     { label: "In progress", value: summary.inProgressOrders, tone: "dark" },
@@ -30,7 +38,10 @@ export function DashboardGraphs({
     { label: "Profit", value: summary.estimatedNetProfit, tone: "muted" },
   ];
 
-  const serviceRows = topCounts(recentProjects, "service_type").slice(0, 5);
+  const serviceRows = topCounts(
+    [...recentOnlineOrders, ...recentProjects],
+    "service_type",
+  ).slice(0, 5);
   const stockRows = lowStock.slice(0, 5).map((item) => ({
     label: String(item.item_name ?? "Item"),
     value: Number(item.quantity ?? 0),
@@ -39,6 +50,11 @@ export function DashboardGraphs({
 
   return (
     <div className="grid gap-6 xl:grid-cols-2">
+      <BarGraph
+        title="Online Orders"
+        rows={onlineOrderRows}
+        emptyText="No online bookings yet"
+      />
       <BarGraph
         title="Order Flow"
         rows={orderRows}

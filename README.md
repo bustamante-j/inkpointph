@@ -4,8 +4,8 @@ Professional MVP website and admin management system for **InkPoint Prints & Ser
 
 The app has:
 
-- Public business website for services, packages, pricing, ordering steps, FAQ, and Messenger inquiries.
-- Admin-only dashboard for clients, projects/orders, payments, expenses, inventory, products with images, services/packages, public prices, reports, activity logs, and settings.
+- Public business website for services, packages, pricing, contact details, online order booking, FAQ, and Messenger inquiries.
+- Admin-only dashboard for online orders, clients, projects/orders, payments, expenses, inventory, products with images, services/packages, public prices, reports, activity logs, and settings.
 - Supabase Auth, Supabase database schema, Row Level Security policy suggestions, and seed data.
 
 ## Stack
@@ -37,6 +37,7 @@ cp .env.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_MESSENGER_LINK=
+NEXT_PUBLIC_FACEBOOK_PAGE=
 NEXT_PUBLIC_BUSINESS_EMAIL=
 NEXT_PUBLIC_BUSINESS_PHONE=
 NEXT_PUBLIC_WEBSITE_URL=
@@ -70,6 +71,7 @@ The schema creates:
 
 - `profiles`
 - `clients`
+- `online_orders`
 - `projects_orders`
 - `payments`
 - `expenses`
@@ -84,7 +86,7 @@ The schema creates:
 
 The schema also creates a public Supabase Storage bucket named `product-images` with policies that let admins upload product photos and let visitors view those public product images.
 
-Private admin tables have RLS enabled. Public reads are allowed only for available `services` and `packages`.
+Private admin tables have RLS enabled. Public reads are allowed only for available catalog records. Visitors can insert new `online_orders`, while only admins can view and update them.
 
 ## Create the Admin Account
 
@@ -112,6 +114,7 @@ Admin:
 
 - `/login`
 - `/admin/dashboard`
+- `/admin/online-orders`
 - `/admin/clients`
 - `/admin/projects`
 - `/admin/payments`
@@ -129,7 +132,10 @@ Admin:
 
 - Customers do not create accounts.
 - Customers do not upload files through the website.
-- Ordering and file sending happen through Facebook Messenger.
+- Customers can submit a payment-first online order from the public website.
+- Online order statuses are updated by the admin as `pending`, `working_on_it`, `ready_for_pickup`, `completed`, or `cancelled`.
+- File sending still happens through Facebook Messenger.
+- Walk-ins are welcome; customers do not need to register or order online before visiting.
 - Only the owner/admin signs in to the dashboard.
 - Product photos are uploaded by the admin in `/admin/products` and displayed on the public website.
 - Products, packages, services, and prices can be changed in the admin dashboard and will reflect on the public website.
@@ -162,7 +168,7 @@ If you already ran the original schema before product photo support was added, r
 -- supabase/product-images-migration.sql
 ```
 
-This adds the `products` table, `price_items` table, product image storage bucket, and required policies without requiring seed data.
+This adds the `products` table, `price_items` table, `online_orders` table, product image storage bucket, and required policies without requiring seed data.
 
 ## Notes
 

@@ -61,6 +61,49 @@ for all to authenticated
 using (public.is_admin())
 with check (public.is_admin());
 
+create index if not exists idx_price_items_display_order on public.price_items(display_order);
+
+create table if not exists public.online_orders (
+  id uuid primary key default gen_random_uuid(),
+  customer_name text not null,
+  contact_number text not null,
+  messenger_name text,
+  email text,
+  service_type text not null,
+  order_details text not null,
+  quantity numeric not null default 1 check (quantity >= 1),
+  needed_by date,
+  pickup_or_delivery text not null default 'pickup' check (pickup_or_delivery in ('pickup', 'delivery')),
+  payment_method text not null default 'gcash' check (payment_method in ('gcash', 'cash', 'other')),
+  payment_reference text not null,
+  payment_note text,
+  order_status text not null default 'pending' check (order_status in ('pending', 'working_on_it', 'ready_for_pickup', 'completed', 'cancelled')),
+  admin_notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists set_online_orders_updated_at on public.online_orders;
+create trigger set_online_orders_updated_at
+before update on public.online_orders
+for each row execute function public.set_updated_at();
+
+alter table public.online_orders enable row level security;
+
+drop policy if exists "online_orders_public_insert" on public.online_orders;
+create policy "online_orders_public_insert" on public.online_orders
+for insert to anon, authenticated
+with check (order_status = 'pending');
+
+drop policy if exists "online_orders_admin_all" on public.online_orders;
+create policy "online_orders_admin_all" on public.online_orders
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+create index if not exists idx_online_orders_created_at on public.online_orders(created_at desc);
+create index if not exists idx_online_orders_order_status on public.online_orders(order_status);
+
 alter table public.activity_logs
 drop constraint if exists activity_logs_module_check;
 
@@ -68,11 +111,9 @@ alter table public.activity_logs
 add constraint activity_logs_module_check
 check (module in (
   'clients', 'projects', 'projects_orders', 'payments', 'expenses',
-  'inventory', 'inventory_items', 'products', 'services', 'packages', 'prices', 'price_items', 'reports',
+  'inventory', 'inventory_items', 'online_orders', 'products', 'services', 'packages', 'prices', 'price_items', 'reports',
   'settings', 'authentication'
 ));
-
-create index if not exists idx_price_items_display_order on public.price_items(display_order);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
