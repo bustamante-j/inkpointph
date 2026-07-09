@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { OnlineOrderForm } from "@/components/public/order-form";
 import { getPublicCatalog } from "@/lib/admin/data";
 import {
   business,
@@ -13,9 +13,8 @@ import {
   faqItems,
   orderSteps,
   priceRows,
-  serviceTypeOptions,
+  publicServiceNames,
 } from "@/lib/constants";
-import { submitOnlineOrderAction } from "@/lib/public/actions";
 
 type HomeProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -25,11 +24,27 @@ export default async function Home({ searchParams }: HomeProps) {
   const query = await searchParams;
   const orderReceived = query.order === "received";
   const catalog = await getPublicCatalog();
-  const services = catalog.services?.length ? catalog.services : defaultServices;
-  const packages = catalog.packages?.length ? catalog.packages : defaultPackages;
-  const products = catalog.products?.length ? catalog.products : defaultProducts;
-  const prices = catalog.prices?.length
-    ? catalog.prices
+  const catalogServices =
+    catalog.services?.filter((service) => publicServiceNames.includes(service.name)) ?? [];
+  const catalogProducts =
+    catalog.products?.filter((product) =>
+      defaultProducts.some((fallback) => fallback.name === product.name),
+    ) ?? [];
+  const catalogPackages =
+    catalog.packages?.filter((bundle) =>
+      defaultPackages.some((fallback) => fallback.name === bundle.name),
+    ) ?? [];
+  const catalogPrices =
+    catalog.prices?.filter((row) => publicServiceNames.includes(row.service_name)) ?? [];
+
+  const services =
+    catalogServices.length >= defaultServices.length ? catalogServices : defaultServices;
+  const packages =
+    catalogPackages.length >= defaultPackages.length ? catalogPackages : defaultPackages;
+  const products =
+    catalogProducts.length >= defaultProducts.length ? catalogProducts : defaultProducts;
+  const prices = catalogPrices.length >= priceRows.length
+    ? catalogPrices
     : priceRows.map(([serviceName, unitLabel, priceLabel], index) => ({
         service_name: serviceName,
         unit_label: unitLabel,
@@ -82,8 +97,8 @@ export default async function Home({ searchParams }: HomeProps) {
               Printing help for school, work, and small business needs.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-zinc-700">
-              Send your details online, pay first for online orders, then pick up or arrange
-              delivery when it is ready.
+              Upload your file, choose the right print options, attach your GCash screenshot,
+              then pick up or arrange delivery when it is ready.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href="#online-order" className="h-12 bg-red-900 px-6 hover:bg-red-800">
@@ -121,99 +136,16 @@ export default async function Home({ searchParams }: HomeProps) {
             </h2>
             <div className="mt-5 space-y-3 text-sm leading-6 text-zinc-700">
               <p>Online orders are payment-first.</p>
-              <p>Send files through Messenger after submitting this form.</p>
+              <p>You can upload your files directly here.</p>
               <p>Walk-ins are still welcome. No registration or online order is needed.</p>
             </div>
             <div className="mt-6 border-l-4 border-red-900 bg-white p-4 text-sm leading-6 text-zinc-700">
-              GCash details are to follow. If you need confirmation before paying, message us first.
+              Attach your GCash screenshot if you already paid. If you need confirmation
+              first, message us before submitting.
             </div>
           </div>
 
-          <form
-            action={submitOnlineOrderAction}
-            className="border border-red-900/20 bg-[#fffdf8] p-5 shadow-sm shadow-red-950/5 sm:p-6"
-          >
-            {orderReceived ? (
-              <div className="mb-5 border border-emerald-700/25 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-                Order received. We will check the payment/reference and message you for updates.
-              </div>
-            ) : null}
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Name" name="customer_name" required />
-              <Field label="Contact number" name="contact_number" type="tel" required />
-              <Field label="Messenger name" name="messenger_name" />
-              <Field label="Email" name="email" type="email" />
-
-              <label className="block">
-                <span className="text-sm font-semibold text-zinc-800">Service needed *</span>
-                <select name="service_type" required className={inputClass}>
-                  <option value="">Choose a service</option>
-                  {serviceTypeOptions.map((service) => (
-                    <option key={service} value={service}>
-                      {service}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <Field label="Quantity" name="quantity" type="number" min="1" defaultValue="1" required />
-              <Field label="Needed by" name="needed_by" type="date" />
-
-              <label className="block">
-                <span className="text-sm font-semibold text-zinc-800">Pickup or delivery *</span>
-                <select name="pickup_or_delivery" required className={inputClass}>
-                  <option value="pickup">Pickup</option>
-                  <option value="delivery">Delivery</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-zinc-800">Payment method *</span>
-                <select name="payment_method" required className={inputClass}>
-                  <option value="gcash">GCash</option>
-                  <option value="other">Other confirmed payment</option>
-                </select>
-              </label>
-
-              <Field
-                label="Payment reference"
-                name="payment_reference"
-                placeholder="GCash reference number or confirmation note"
-                required
-              />
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-semibold text-zinc-800">Order details *</span>
-                <textarea
-                  name="order_details"
-                  required
-                  rows={5}
-                  placeholder="Size, color, number of pages, paper type, sticker details, deadline, or other instructions."
-                  className={`${inputClass} min-h-32 py-3`}
-                />
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-semibold text-zinc-800">Payment note</span>
-                <textarea
-                  name="payment_note"
-                  rows={3}
-                  placeholder="Optional notes about payment or pickup/delivery."
-                  className={`${inputClass} min-h-24 py-3`}
-                />
-              </label>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-3 border-t border-red-900/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-zinc-600">
-                Status can be updated by InkPoint as pending, working on it, or ready for pickup.
-              </p>
-              <SubmitButton pendingText="Sending order..." className="h-11 shrink-0 px-6">
-                Submit order
-              </SubmitButton>
-            </div>
-          </form>
+          <OnlineOrderForm orderReceived={orderReceived} />
         </div>
       </section>
 
@@ -258,6 +190,22 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       </Section>
 
+      <Section id="prepare" title="Before you submit">
+        <div className="grid gap-px border border-red-900/15 bg-red-900/15 md:grid-cols-4">
+          {[
+            ["Upload", "Attach your document, image, PDF, or certificate file if ready."],
+            ["Choose", "Select pages, copies, paper size, and color when the service needs it."],
+            ["Pay", "Online orders are payment-first. Add your GCash screenshot when paid."],
+            ["Receive", "Pick up at the shop or arrange delivery after the order is ready."],
+          ].map(([title, copy]) => (
+            <div key={title} className="bg-white p-5">
+              <p className="text-sm font-black text-red-950">{title}</p>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">{copy}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       <Section id="services" title="Services">
         <div className="grid gap-px border border-red-900/15 bg-red-900/15 sm:grid-cols-2 lg:grid-cols-4">
           {services.slice(0, 8).map((service) => (
@@ -266,6 +214,9 @@ export default async function Home({ searchParams }: HomeProps) {
               <h3 className="mt-3 font-semibold text-zinc-950">{service.name}</h3>
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-600">
                 {service.description}
+              </p>
+              <p className="mt-4 border-l-4 border-red-900 pl-3 text-sm font-semibold text-red-950">
+                {formatCatalogPrice(service.name, service.starting_price)}
               </p>
             </div>
           ))}
@@ -304,11 +255,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between gap-3 text-xs font-semibold text-red-900">
                     <span>{product.category ?? "Product"}</span>
-                    <span>
-                      {typeof product.starting_price === "number"
-                        ? `PHP ${product.starting_price}+`
-                        : product.starting_price}
-                    </span>
+                    <span>{formatCatalogPrice(product.name, product.starting_price)}</span>
                   </div>
                   <h3 className="mt-3 font-semibold text-zinc-950">{product.name}</h3>
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-600">
@@ -328,9 +275,7 @@ export default async function Home({ searchParams }: HomeProps) {
               <h3 className="font-semibold text-zinc-950">{bundle.name}</h3>
               <p className="mt-2 min-h-12 text-sm leading-6 text-zinc-600">{bundle.description}</p>
               <p className="mt-4 border-l-4 border-red-900 pl-3 text-sm font-semibold text-zinc-800">
-                {typeof bundle.starting_price === "number"
-                  ? `Starts at PHP ${bundle.starting_price}`
-                  : bundle.starting_price}
+                {formatCatalogPrice(bundle.name, bundle.starting_price)}
               </p>
             </div>
           ))}
@@ -387,45 +332,6 @@ export default async function Home({ searchParams }: HomeProps) {
   );
 }
 
-const inputClass =
-  "mt-1.5 h-11 w-full border border-red-900/20 bg-white px-3 text-sm outline-none transition placeholder:text-zinc-400 focus:border-red-900 focus:ring-2 focus:ring-red-900/10";
-
-function Field({
-  label,
-  name,
-  type = "text",
-  required,
-  placeholder,
-  min,
-  defaultValue,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  required?: boolean;
-  placeholder?: string;
-  min?: string;
-  defaultValue?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-semibold text-zinc-800">
-        {label}
-        {required ? " *" : ""}
-      </span>
-      <input
-        name={name}
-        type={type}
-        min={min}
-        required={required}
-        placeholder={placeholder}
-        defaultValue={defaultValue}
-        className={inputClass}
-      />
-    </label>
-  );
-}
-
 function InfoBox({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white p-5">
@@ -433,6 +339,27 @@ function InfoBox({ title, children }: { title: string; children: React.ReactNode
       <div className="text-sm leading-6 text-zinc-700">{children}</div>
     </div>
   );
+}
+
+function formatCatalogPrice(name: string, value: unknown) {
+  const knownPrices: Record<string, string> = {
+    "Certificate Printing": "PHP 15/certificate",
+    Certificates: "PHP 15/certificate",
+    "Certificate Set": "PHP 15/certificate",
+    "Colored Output Pack": "Starts at PHP 5/page",
+    Photocopies: "Starts at PHP 3/page",
+    Photocopy: "Starts at PHP 3/page",
+    "Photo Print Set": "PHP 50-100/photo",
+    "Photo Printing": "PHP 50-100/photo",
+    "Photo Prints": "PHP 50-100/photo",
+    "Printed Documents": "Starts at PHP 5/page",
+    Printing: "Starts at PHP 5/page",
+    "Student Document Pack": "Starts at PHP 3/page",
+  };
+
+  if (knownPrices[name]) return knownPrices[name];
+  if (typeof value === "number") return `Starts at PHP ${value}`;
+  return value === null || value === undefined || value === "" ? "Price to follow" : String(value);
 }
 
 function Section({

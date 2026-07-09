@@ -40,11 +40,21 @@ create table if not exists public.online_orders (
   service_type text not null,
   order_details text not null,
   quantity numeric not null default 1 check (quantity >= 1),
+  page_count numeric,
+  print_color text,
+  paper_size text,
+  print_sides text,
+  photo_size text,
+  certificate_type text,
   needed_by date,
   pickup_or_delivery text not null default 'pickup' check (pickup_or_delivery in ('pickup', 'delivery')),
-  payment_method text not null default 'gcash' check (payment_method in ('gcash', 'cash', 'other')),
-  payment_reference text not null,
+  order_file_urls text[] not null default '{}',
+  order_file_names text[] not null default '{}',
+  payment_screenshot_url text,
+  payment_method text default 'gcash' check (payment_method in ('gcash', 'cash', 'other')),
+  payment_reference text,
   payment_note text,
+  additional_instructions text,
   order_status text not null default 'pending' check (order_status in ('pending', 'working_on_it', 'ready_for_pickup', 'completed', 'cancelled')),
   admin_notes text,
   created_at timestamptz not null default now(),
@@ -521,6 +531,28 @@ set public = excluded.public,
     file_size_limit = excluded.file_size_limit,
     allowed_mime_types = excluded.allowed_mime_types;
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'order-uploads',
+  'order-uploads',
+  true,
+  15728640,
+  array[
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/gif',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'text/plain'
+  ]
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
 drop policy if exists "product_images_public_read" on storage.objects;
 create policy "product_images_public_read" on storage.objects
 for select to anon, authenticated
@@ -541,3 +573,18 @@ drop policy if exists "product_images_admin_delete" on storage.objects;
 create policy "product_images_admin_delete" on storage.objects
 for delete to authenticated
 using (bucket_id = 'product-images' and public.is_admin());
+
+drop policy if exists "order_uploads_public_read" on storage.objects;
+create policy "order_uploads_public_read" on storage.objects
+for select to anon, authenticated
+using (bucket_id = 'order-uploads');
+
+drop policy if exists "order_uploads_public_insert" on storage.objects;
+create policy "order_uploads_public_insert" on storage.objects
+for insert to anon, authenticated
+with check (bucket_id = 'order-uploads');
+
+drop policy if exists "order_uploads_admin_delete" on storage.objects;
+create policy "order_uploads_admin_delete" on storage.objects
+for delete to authenticated
+using (bucket_id = 'order-uploads' and public.is_admin());

@@ -4,7 +4,7 @@ Professional MVP website and admin management system for **InkPoint Prints & Ser
 
 The app has:
 
-- Public business website for services, packages, pricing, contact details, online order booking, FAQ, and Messenger inquiries.
+- Public business website for services, packages, pricing, contact details, online order booking, file uploads, FAQ, and Messenger inquiries.
 - Admin-only dashboard for online orders, clients, projects/orders, payments, expenses, inventory, products with images, services/packages, public prices, reports, activity logs, and settings.
 - Supabase Auth, Supabase database schema, Row Level Security policy suggestions, and seed data.
 
@@ -84,7 +84,10 @@ The schema creates:
 - `activity_logs`
 - `order_timeline_entries`
 
-The schema also creates a public Supabase Storage bucket named `product-images` with policies that let admins upload product photos and let visitors view those public product images.
+The schema also creates public Supabase Storage buckets:
+
+- `product-images` lets admins upload product photos and lets visitors view those product images.
+- `order-uploads` lets visitors attach order files and GCash screenshots to public order bookings.
 
 Private admin tables have RLS enabled. Public reads are allowed only for available catalog records. Visitors can insert new `online_orders`, while only admins can view and update them.
 
@@ -131,10 +134,9 @@ Admin:
 ## Business Rules Implemented
 
 - Customers do not create accounts.
-- Customers do not upload files through the website.
 - Customers can submit a payment-first online order from the public website.
+- Customers can upload order files and a GCash payment screenshot through the website.
 - Online order statuses are updated by the admin as `pending`, `working_on_it`, `ready_for_pickup`, `completed`, or `cancelled`.
-- File sending still happens through Facebook Messenger.
 - Walk-ins are welcome; customers do not need to register or order online before visiting.
 - Only the owner/admin signs in to the dashboard.
 - Product photos are uploaded by the admin in `/admin/products` and displayed on the public website.
@@ -168,7 +170,7 @@ If you already ran the original schema before product photo support was added, r
 -- supabase/product-images-migration.sql
 ```
 
-This adds the `products` table, `price_items` table, `online_orders` table, product image storage bucket, and required policies without requiring seed data.
+This adds the `products` table, `price_items` table, `online_orders` file-upload columns, product image storage bucket, order upload storage bucket, and required policies without requiring seed data.
 
 ## Notes
 

@@ -45,7 +45,15 @@ export type FieldConfig = {
 export type ColumnConfig = {
   label: string;
   value: (row: AnyRecord) => unknown;
-  format?: "text" | "money" | "date" | "datetime" | "status" | "boolean" | "image";
+  format?:
+    | "text"
+    | "money"
+    | "date"
+    | "datetime"
+    | "status"
+    | "boolean"
+    | "image"
+    | "links";
 };
 
 export type ModuleConfig = {
@@ -155,7 +163,14 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     description: "Review public booking requests and update customer order status.",
     select: "*",
     orderBy: { column: "created_at", ascending: false },
-    searchFields: ["customer_name", "contact_number", "messenger_name", "service_type", "order_details"],
+    searchFields: [
+      "customer_name",
+      "contact_number",
+      "messenger_name",
+      "service_type",
+      "order_details",
+      "additional_instructions",
+    ],
     statusField: "order_status",
     dateField: "created_at",
     creatable: false,
@@ -176,11 +191,17 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { label: "Service", value: (row) => row.service_type },
       { label: "Order details", value: (row) => row.order_details },
       { label: "Quantity", value: (row) => row.quantity },
+      { label: "Page count", value: (row) => row.page_count },
+      { label: "Color", value: (row) => row.print_color, format: "status" },
+      { label: "Paper size", value: (row) => row.paper_size, format: "status" },
+      { label: "Print side", value: (row) => row.print_sides, format: "status" },
+      { label: "Photo size", value: (row) => row.photo_size },
+      { label: "Certificate type", value: (row) => row.certificate_type, format: "status" },
       { label: "Needed by", value: (row) => row.needed_by, format: "date" },
       { label: "Pickup / delivery", value: (row) => row.pickup_or_delivery, format: "status" },
-      { label: "Payment method", value: (row) => row.payment_method, format: "status" },
-      { label: "Payment reference", value: (row) => row.payment_reference },
-      { label: "Payment note", value: (row) => row.payment_note },
+      { label: "Uploaded files", value: (row) => row.order_file_urls, format: "links" },
+      { label: "GCash screenshot", value: (row) => row.payment_screenshot_url, format: "image" },
+      { label: "Additional details", value: (row) => row.additional_instructions },
       { label: "Order status", value: (row) => row.order_status, format: "status" },
       { label: "Admin notes", value: (row) => row.admin_notes },
       { label: "Created", value: (row) => row.created_at, format: "datetime" },
@@ -207,7 +228,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     table: "projects_orders",
     title: "Projects / Orders",
     singular: "Project / Order",
-    description: "Track orders from Messenger inquiry through pickup and payment.",
+    description: "Track manual orders, uploaded files, pickup, delivery, and payment.",
     select: "*, clients(full_name, phone_number, messenger_name)",
     orderBy: { column: "created_at", ascending: false },
     searchFields: ["order_number", "title", "service_type", "clients.full_name"],
@@ -238,7 +259,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { label: "Material type", value: (row) => row.material_type },
       { label: "Editing required", value: (row) => row.editing_required, format: "boolean" },
       {
-        label: "File via Messenger",
+        label: "File received online",
         value: (row) => row.file_received_via_messenger,
         format: "boolean",
       },
@@ -307,7 +328,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
         name: "file_received_via_messenger",
         label: "File received via Messenger",
         type: "checkbox",
-        help: "Customers do not upload files on the website.",
+        help: "Use this for files received through the website or Messenger.",
       },
       { name: "deadline", label: "Deadline", type: "datetime-local" },
       { name: "pickup_date", label: "Pickup date", type: "datetime-local" },

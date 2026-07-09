@@ -24,6 +24,8 @@ export function DetailList({
               <Badge value={String(field.value(record) ?? "")} />
             ) : field.format === "image" ? (
               <DetailImage value={field.value(record)} />
+            ) : field.format === "links" ? (
+              <DetailLinks value={field.value(record)} />
             ) : (
               formatColumnValue(field, record)
             )}
@@ -31,6 +33,34 @@ export function DetailList({
         </div>
       ))}
     </dl>
+  );
+}
+
+function DetailLinks({ value }: { value: unknown }) {
+  const links = Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : typeof value === "string" && value
+      ? [value]
+      : [];
+
+  if (!links.length) {
+    return <span className="text-zinc-500">No files uploaded</span>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {links.map((link, index) => (
+        <a
+          key={link}
+          href={link}
+          target="_blank"
+          rel="noreferrer"
+          className="block border border-red-900/15 bg-[#fff7ed] px-3 py-2 font-semibold text-red-950 hover:border-red-900"
+        >
+          Open file {index + 1}
+        </a>
+      ))}
+    </div>
   );
 }
 

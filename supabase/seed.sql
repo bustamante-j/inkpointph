@@ -1,42 +1,35 @@
 insert into public.services (name, description, starting_price, category, is_available, display_order)
 values
-  ('General Printing', 'Everyday document printing for school, work, and business.', 2, 'Documents', true, 1),
-  ('Photocopying', 'Clear copies for IDs, forms, reviewers, and office papers.', 2, 'Documents', true, 2),
-  ('Scanning', 'Document scans for online submission and archiving.', 5, 'Digital', true, 3),
-  ('Sticker Printing', 'Sticker sheets for labels, packaging, and personal use.', 60, 'Stickers', true, 4),
-  ('Photo Printing', 'Photo prints from customer-provided files.', 20, 'Photo', true, 5),
-  ('ID Photo Layout & Printing', 'Layout and print ID photos using a clear photo you provide.', 60, 'Photo', true, 6),
-  ('Lamination', 'Protect important documents, cards, and certificates.', 20, 'Finishing', true, 7),
-  ('GCash QR Printing', 'Clean QR prints for counters, shops, and payment displays.', 30, 'Business', true, 8)
+  ('Printing', 'Upload your document and choose black and white or colored printing.', 5, 'Documents', true, 1),
+  ('Photocopy', 'Clear photocopies for school papers, IDs, forms, and office documents.', 3, 'Documents', true, 2),
+  ('Photo Printing', 'Photo prints from uploaded files, available in common sizes.', 50, 'Photo', true, 3),
+  ('Certificate Printing', 'Clean certificate printing for school, recognition, events, and office use.', 15, 'Events', true, 4)
 on conflict do nothing;
 
 insert into public.packages (name, description, included_services, starting_price, is_available, display_order)
 values
-  ('Job Seeker Basic Package', 'Resume print, photocopy, and basic document preparation.', array['Resume / CV Printing', 'Photocopying'], 50, true, 1),
-  ('Job Seeker Complete Package', 'Resume, certificates, IDs, and application papers prepared together.', array['Resume / CV Printing', 'Photocopying', 'ID Photo Layout & Printing'], 120, true, 2),
-  ('Student Rush Package', 'Quick school document printing for urgent submissions.', array['General Printing', 'PDF Conversion / Merge / Scan'], 40, true, 3),
-  ('ID Photo Print Package', 'ID photo layout and printing from a customer-provided photo.', array['ID Photo Layout & Printing', 'Photo Printing'], 60, true, 4),
-  ('Sticker Starter Package', 'Starter sticker sheet for labels, gifts, or personal projects.', array['Sticker Printing'], 100, true, 5),
-  ('Small Business Starter Package', 'Labels, QR prints, and basic print materials for small sellers.', array['Business Labels & Stickers', 'GCash QR Printing'], 150, true, 6)
+  ('Student Document Pack', 'Printing or photocopy for modules, reviewers, forms, and assignments.', array['Printing', 'Photocopy'], 3, true, 1),
+  ('Colored Output Pack', 'Colored printing or colored photocopy for pages that need visual clarity.', array['Printing', 'Photocopy'], 5, true, 2),
+  ('Photo Print Set', 'Photo printing for personal, school, and keepsake images.', array['Photo Printing'], 50, true, 3),
+  ('Certificate Set', 'Certificate printing for classes, events, recognition, and simple awards.', array['Certificate Printing'], 15, true, 4)
 on conflict do nothing;
 
-insert into public.products (name, description, starting_price, category, is_available, display_order)
+insert into public.products (name, description, starting_price, category, image_url, is_available, display_order)
 values
-  ('Sticker Sheets', 'Custom sticker sheets for labels, packaging, gifts, and small business branding.', 60, 'Stickers', true, 1),
-  ('Photo Prints', 'Clean photo prints from customer-provided files, ready for pickup.', 20, 'Photo', true, 2),
-  ('Laminated Documents', 'Protected cards, certificates, IDs, and important everyday documents.', 20, 'Finishing', true, 3)
+  ('Printed Documents', 'Everyday document prints in black and white or colored output.', 5, 'Printing', '/images/services/printing.png', true, 1),
+  ('Photocopies', 'Readable copies for forms, IDs, school work, and office paperwork.', 3, 'Photocopy', '/images/services/photocopy.png', true, 2),
+  ('Photo Prints', 'Glossy photo prints from uploaded customer images.', 50, 'Photo', '/images/services/photo-printing.png', true, 3),
+  ('Certificates', 'Certificate prints for recognition, school, and event needs.', 15, 'Certificates', '/images/services/certificate-printing.png', true, 4)
 on conflict do nothing;
 
 insert into public.price_items (service_name, unit_label, price_label, category, is_available, display_order)
 values
-  ('Black and white document', 'Short / A4', 'PHP 2.00+', 'Documents', true, 1),
-  ('Colored document', 'Short / A4', 'PHP 10.00+', 'Documents', true, 2),
-  ('Photo print', 'Per piece', 'PHP 20.00+', 'Photo', true, 3),
-  ('Sticker print', 'Per sheet', 'PHP 60.00+', 'Stickers', true, 4),
-  ('Lamination', 'Per piece', 'PHP 20.00+', 'Finishing', true, 5),
-  ('Scanning', 'Per page', 'PHP 5.00+', 'Digital', true, 6),
-  ('PDF merge / conversion', 'Per request', 'PHP 20.00+', 'Digital', true, 7),
-  ('Document formatting', 'Per document', 'PHP 50.00+', 'Editing', true, 8)
+  ('Printing', 'Non-colored per page', 'PHP 5.00', 'Documents', true, 1),
+  ('Printing', 'Colored per page', 'PHP 10.00', 'Documents', true, 2),
+  ('Photocopy', 'Non-colored per page', 'PHP 3.00', 'Documents', true, 3),
+  ('Photocopy', 'Colored per page', 'PHP 5.00', 'Documents', true, 4),
+  ('Photo Printing', 'Per photo', 'PHP 50.00-100.00', 'Photo', true, 5),
+  ('Certificate Printing', 'Per certificate', 'PHP 15.00', 'Events', true, 6)
 on conflict do nothing;
 
 with inserted_clients as (
@@ -53,17 +46,17 @@ orders as (
     color_type, material_type, editing_required, file_received_via_messenger,
     deadline, pickup_date, order_status, total_price, amount_paid, payment_method, notes
   )
-  select id, 'Resume / CV Printing', 'Resume print set', 'Two resume copies and certificate photocopies.', 1, 8, 'a4',
+  select id, 'Printing', 'Resume print set', 'Two resume copies and certificate photocopies.', 1, 8, 'a4',
          'black_and_white', 'bond paper', true, true, now() + interval '1 day', now() + interval '1 day',
          'ready_for_pickup', 90, 50, 'gcash', 'Customer will pick up after class.'
   from inserted_clients where full_name = 'Mika Santos'
   union all
-  select id, 'School & Project Printing', 'Research paper print', 'Colored cover page plus black and white inside pages.', 2, 42, 'a4',
+  select id, 'Printing', 'Research paper print', 'Colored cover page plus black and white inside pages.', 2, 42, 'a4',
          'mixed', 'bond paper', false, true, now() + interval '2 days', null,
          'in_progress', 180, 0, null, 'Check page order before printing.'
   from inserted_clients where full_name = 'Jared Dela Cruz'
   union all
-  select id, 'Business Labels & Stickers', 'Cookie label stickers', 'Round product label stickers for packaging.', 4, 0, 'custom',
+  select id, 'Photo Printing', 'Photo print set', 'Photo prints for pickup.', 4, 0, 'custom',
          'colored', 'sticker paper', false, true, now() + interval '3 days', null,
          'confirmed', 420, 420, 'cash', 'Use matte sticker paper.'
   from inserted_clients where full_name = 'Luna Bakes'
