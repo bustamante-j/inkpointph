@@ -16,6 +16,7 @@ import {
 import {
   addPaymentToProjectAction,
   addProjectNoteAction,
+  adjustInventoryAction,
   convertOnlineOrderAction,
 } from "@/lib/admin/actions";
 import {
@@ -84,6 +85,31 @@ export default async function RecordDetailPage({ params }: PageProps) {
                 )}
               </CardContent>
             </Card>
+          ) : null}
+          {config.key === "inventory" ? (
+            <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+              <Card>
+                <CardHeader><h2 className="font-semibold text-zinc-950">Record stock movement</h2></CardHeader>
+                <CardContent>
+                  <form action={adjustInventoryAction.bind(null, id)} className="space-y-4">
+                    <label className="block"><span className="text-sm font-medium text-zinc-800">Movement</span><select name="transaction_type" className="mt-1.5 h-10 w-full border border-red-900/20 bg-white px-3 text-sm"><option value="restock">Restock</option><option value="usage">Used for orders</option><option value="adjustment">Manual adjustment</option></select></label>
+                    <label className="block"><span className="text-sm font-medium text-zinc-800">Quantity</span><input name="quantity_change" type="number" step="0.01" required className="mt-1.5 h-10 w-full border border-red-900/20 bg-white px-3 text-sm" /></label>
+                    <label className="block"><span className="text-sm font-medium text-zinc-800">Notes</span><textarea name="notes" rows={3} className="mt-1.5 w-full border border-red-900/20 bg-white px-3 py-2 text-sm" /></label>
+                    <SubmitButton>Save stock movement</SubmitButton>
+                  </form>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><h2 className="font-semibold text-zinc-950">Stock history</h2></CardHeader>
+                <CardContent>
+                  {Array.isArray(result.record.inventory_transactions) && result.record.inventory_transactions.length ? (
+                    <div className="divide-y divide-zinc-100">
+                      {(result.record.inventory_transactions as Record<string, unknown>[]).map((transaction) => <div key={String(transaction.id)} className="flex items-center justify-between gap-4 py-3"><div><Badge value={String(transaction.transaction_type)} /><p className="mt-2 text-xs text-zinc-500">{String(transaction.notes || "No note")}</p></div><div className="text-right"><p className={`font-black ${Number(transaction.quantity_change) < 0 ? "text-rose-700" : "text-emerald-700"}`}>{Number(transaction.quantity_change) > 0 ? "+" : ""}{String(transaction.quantity_change)}</p><p className="mt-1 text-xs text-zinc-500">{formatDateTime(String(transaction.created_at))}</p></div></div>)}
+                    </div>
+                  ) : <EmptyState title="No stock history yet" description="Restocks, usage, and corrections will appear here." />}
+                </CardContent>
+              </Card>
+            </div>
           ) : null}
         </>
       ) : (

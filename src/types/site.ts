@@ -76,3 +76,12 @@ export type SiteListItem = {
   is_visible: boolean;
   display_order: number;
 };
+
+export type OrderFormOption = {
+  id?: string;
+  field_key: string;
+  option_value: string;
+  option_label: string;
+  is_available: boolean;
+  display_order: number;
+};

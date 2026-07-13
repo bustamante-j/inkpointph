@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchReportData, paramsToFilters } from "@/lib/admin/data";
+import { escapeCsvCell } from "@/lib/csv";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -19,9 +20,41 @@ export async function GET(request: Request) {
     ["orders", "partial", count(data.projects, "payment_status", "partial")],
     ["orders", "completed", count(data.projects, "order_status", "completed")],
     ["inventory", "low_stock", data.inventory.filter((item) => item.status === "low_stock").length],
+    [],
+    ["payments"],
+    ["date", "order", "method", "amount", "reference"],
+    ...data.payments.map((payment) => [
+      payment.payment_date,
+      (payment.projects_orders as Record<string, unknown> | null)?.order_number,
+      payment.payment_method,
+      payment.amount,
+      payment.reference_number,
+    ]),
+    [],
+    ["expenses"],
+    ["date", "name", "category", "supplier", "amount"],
+    ...data.expenses.map((expense) => [
+      expense.expense_date,
+      expense.expense_name,
+      expense.category,
+      expense.supplier,
+      expense.amount,
+    ]),
+    [],
+    ["orders"],
+    ["order_number", "service", "status", "payment_status", "total", "paid", "balance"],
+    ...data.projects.map((project) => [
+      project.order_number,
+      project.service_type,
+      project.order_status,
+      project.payment_status,
+      project.total_price,
+      project.amount_paid,
+      project.balance_due,
+    ]),
   ];
 
-  const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+  const csv = rows.map((row) => row.map(escapeCsvCell).join(",")).join("\n");
 
   return new Response(csv, {
     headers: {
@@ -37,10 +70,4 @@ function sum(rows: Record<string, unknown>[], field: string) {
 
 function count(rows: Record<string, unknown>[], field: string, value: string) {
   return rows.filter((row) => row[field] === value).length;
-}
-
-function escapeCsv(value: unknown) {
-  const text = String(value ?? "");
-  if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
-  return text;
 }

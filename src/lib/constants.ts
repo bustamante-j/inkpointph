@@ -91,7 +91,7 @@ export const defaultSiteSettings = {
   id: "main",
   business_name: business.name,
   location: business.location,
-  address_note: business.addressNote,
+  address_note: "",
   motto: business.motto,
   business_description:
     "Friendly and reliable printing for school, work, events, and everyday needs.",
@@ -137,6 +137,22 @@ export const defaultOrderStepItems = [
   { title: "Pay", description: "Review the calculated price and attach your GCash screenshot.", is_visible: true, display_order: 3 },
   { title: "Track", description: "Keep your order number and check the latest status anytime.", is_visible: true, display_order: 4 },
   { title: "Collect", description: "Pick up at the shop or arrange delivery when ready.", is_visible: true, display_order: 5 },
+];
+
+export const defaultOrderFormOptions = [
+  { field_key: "print_color", option_value: "non_colored", option_label: "Non-colored", is_available: true, display_order: 1 },
+  { field_key: "print_color", option_value: "colored", option_label: "Colored", is_available: true, display_order: 2 },
+  { field_key: "paper_size", option_value: "short", option_label: "Short", is_available: true, display_order: 1 },
+  { field_key: "paper_size", option_value: "a4", option_label: "A4", is_available: true, display_order: 2 },
+  { field_key: "paper_size", option_value: "legal", option_label: "Long / Legal", is_available: true, display_order: 3 },
+  { field_key: "paper_size", option_value: "custom", option_label: "Custom / not sure", is_available: true, display_order: 4 },
+  { field_key: "print_sides", option_value: "single_sided", option_label: "Single-sided", is_available: true, display_order: 1 },
+  { field_key: "print_sides", option_value: "double_sided", option_label: "Double-sided", is_available: true, display_order: 2 },
+  { field_key: "certificate_type", option_value: "ready_to_print", option_label: "Ready-to-print file", is_available: true, display_order: 1 },
+  { field_key: "certificate_type", option_value: "needs_name_edit", option_label: "Needs name editing", is_available: true, display_order: 2 },
+  { field_key: "certificate_type", option_value: "needs_layout", option_label: "Needs layout help", is_available: true, display_order: 3 },
+  { field_key: "fulfillment", option_value: "pickup", option_label: "Pickup", is_available: true, display_order: 1 },
+  { field_key: "fulfillment", option_value: "delivery", option_label: "Delivery", is_available: true, display_order: 2 },
 ];
 
 export const defaultPackages = [

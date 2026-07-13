@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calculateOrderEstimate } from "@/lib/public/pricing";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import type { PublicPriceItem, PublicService } from "@/types/site";
+import type { OrderFormOption, PublicPriceItem, PublicService } from "@/types/site";
 
 export type OnlineOrderState = {
   status: "idle" | "error" | "success";
@@ -25,7 +25,7 @@ const optionalEmail = z.preprocess(
 
 const optionalNumber = z.preprocess(
   (value) => (value === null || value === "" ? undefined : value),
-  z.coerce.number().int().min(1).optional(),
+  z.coerce.number().int().min(1).max(10000).optional(),
 );
 
 const orderSchema = z.object({
@@ -86,7 +86,11 @@ export async function submitOnlineOrderAction(
   if (parsed.data.website) return fail("The order could not be submitted.");
 
   const payload = parsed.data;
-  const [{ data: service, error: serviceError }, { data: priceRows, error: priceError }] =
+  const [
+    { data: service, error: serviceError },
+    { data: priceRows, error: priceError },
+    { data: optionRows, error: optionError },
+  ] =
     await Promise.all([
       supabase
         .from("services")
@@ -99,23 +103,32 @@ export async function submitOnlineOrderAction(
         .select("*")
         .eq("service_name", payload.service_type)
         .eq("is_available", true),
+      supabase
+        .from("order_form_options")
+        .select("field_key,option_value,is_available")
+        .eq("is_available", true),
     ]);
 
-  if (serviceError || priceError || !service) {
+  if (serviceError || priceError || optionError || !service) {
     return fail("That service is not available right now. Refresh the page and try again.");
   }
 
   const serviceMeta = service as PublicService;
-  const detailError = validateServiceDetails(payload, serviceMeta);
+  const detailError = validateServiceDetails(
+    payload,
+    serviceMeta,
+    (optionRows ?? []) as OrderFormOption[],
+  );
   if (detailError) return fail(detailError);
+  const order = normalizeServiceDetails(payload, serviceMeta);
 
   const estimate = calculateOrderEstimate(
     {
-      serviceType: payload.service_type,
-      quantity: payload.quantity,
-      pageCount: payload.page_count,
-      printColor: payload.print_color,
-      photoSize: payload.photo_size,
+      serviceType: order.service_type,
+      quantity: order.quantity,
+      pageCount: order.page_count,
+      printColor: order.print_color,
+      photoSize: order.photo_size,
     },
     (priceRows ?? []) as PublicPriceItem[],
   );
@@ -161,36 +174,36 @@ export async function submitOnlineOrderAction(
     );
     uploadedPaths.push(paymentScreenshotPath);
 
-    const orderDetails = buildOrderDetails(payload, estimate.total, orderFiles.length);
+    const orderDetails = buildOrderDetails(order, estimate.total, orderFiles.length);
     const { data, error } = await supabase
       .from("online_orders")
       .insert({
         id: orderId,
-        customer_name: payload.customer_name,
-        contact_number: payload.contact_number,
-        messenger_name: payload.messenger_name ?? null,
-        email: payload.email ?? null,
-        service_type: payload.service_type,
+        customer_name: order.customer_name,
+        contact_number: order.contact_number,
+        messenger_name: order.messenger_name ?? null,
+        email: order.email ?? null,
+        service_type: order.service_type,
         order_details: orderDetails,
-        quantity: payload.quantity,
-        page_count: payload.page_count ?? null,
-        print_color: payload.print_color ?? null,
-        paper_size: payload.paper_size ?? null,
-        print_sides: payload.print_sides ?? null,
-        photo_size: payload.photo_size ?? null,
-        certificate_type: payload.certificate_type ?? null,
-        needed_by: payload.needed_by ?? null,
-        pickup_or_delivery: payload.pickup_or_delivery,
-        delivery_address: payload.delivery_address ?? null,
-        is_rush: payload.is_rush,
+        quantity: order.quantity,
+        page_count: order.page_count ?? null,
+        print_color: order.print_color ?? null,
+        paper_size: order.paper_size ?? null,
+        print_sides: order.print_sides ?? null,
+        photo_size: order.photo_size ?? null,
+        certificate_type: order.certificate_type ?? null,
+        needed_by: order.needed_by ?? null,
+        pickup_or_delivery: order.pickup_or_delivery,
+        delivery_address: order.delivery_address ?? null,
+        is_rush: order.is_rush,
         order_file_paths: uploadedPaths.slice(0, orderFiles.length),
         order_file_names: orderFiles.map((file) => file.name),
         payment_screenshot_path: paymentScreenshotPath,
         estimated_total: estimate.total,
         payment_status: "pending_verification",
         payment_method: "gcash",
-        payment_reference: "Private GCash screenshot attached",
-        additional_instructions: payload.additional_instructions ?? null,
+        payment_reference: null,
+        additional_instructions: order.additional_instructions ?? null,
         request_fingerprint: fingerprint,
         privacy_consent_at: new Date().toISOString(),
       })
@@ -212,7 +225,11 @@ export async function submitOnlineOrderAction(
   }
 }
 
-function validateServiceDetails(payload: z.infer<typeof orderSchema>, service: PublicService) {
+function validateServiceDetails(
+  payload: z.infer<typeof orderSchema>,
+  service: PublicService,
+  options: OrderFormOption[],
+) {
   if (service.requires_page_count && !payload.page_count) return "Number of pages is required.";
   if (service.allows_color && !payload.print_color) return "Choose a color option.";
   if (service.requires_paper_size && !payload.paper_size) return "Choose a paper size.";
@@ -222,7 +239,49 @@ function validateServiceDetails(payload: z.infer<typeof orderSchema>, service: P
   if (payload.pickup_or_delivery === "delivery" && !payload.delivery_address) {
     return "Enter a delivery address or landmark.";
   }
+
+  const managedChoices: [string, string | undefined, boolean][] = [
+    ["print_color", payload.print_color, service.allows_color],
+    ["paper_size", payload.paper_size, service.requires_paper_size],
+    ["print_sides", payload.print_sides, service.allows_sides],
+    ["certificate_type", payload.certificate_type, service.allows_certificate_type],
+    ["fulfillment", payload.pickup_or_delivery, true],
+  ];
+  const invalidChoice = managedChoices.find(
+    ([fieldKey, value, applies]) =>
+      applies &&
+      !options.some(
+        (option) =>
+          option.field_key === fieldKey &&
+          option.option_value === value &&
+          option.is_available,
+      ),
+  );
+  if (invalidChoice) {
+    return "One of the selected order choices is no longer available. Refresh the page and try again.";
+  }
   return null;
+}
+
+function normalizeServiceDetails(
+  payload: z.infer<typeof orderSchema>,
+  service: PublicService,
+) {
+  return {
+    ...payload,
+    page_count: service.requires_page_count ? payload.page_count : undefined,
+    print_color: service.allows_color ? payload.print_color : undefined,
+    paper_size: service.requires_paper_size ? payload.paper_size : undefined,
+    print_sides: service.allows_sides ? payload.print_sides : undefined,
+    photo_size: service.allows_photo_size ? payload.photo_size : undefined,
+    certificate_type: service.allows_certificate_type
+      ? payload.certificate_type
+      : undefined,
+    delivery_address:
+      payload.pickup_or_delivery === "delivery"
+        ? payload.delivery_address
+        : undefined,
+  };
 }
 
 async function uploadPrivateOrderFile(

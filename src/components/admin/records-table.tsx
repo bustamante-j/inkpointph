@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Archive, Eye, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,6 +13,7 @@ import {
   type ModuleKey,
 } from "@/lib/admin/module-config";
 import type { AnyRecord } from "@/types/database";
+import { ConfirmActionButton } from "@/components/admin/confirm-action-button";
 
 export function RecordsTable({
   config,
@@ -69,23 +71,23 @@ export function RecordsTable({
                     ) : null}
                     {config.archiveValue ? (
                       <form action={archiveRecordAction.bind(null, config.key as ModuleKey, String(row.id))}>
-                        <button
+                        <ConfirmActionButton
                           className="inline-flex h-8 w-8 items-center justify-center border border-transparent text-zinc-500 hover:border-zinc-200 hover:bg-zinc-100 hover:text-red-900"
-                          aria-label="Archive"
-                          title="Archive"
+                          label="Archive"
+                          message={`Archive this ${config.singular.toLowerCase()}?`}
                         >
                           <Archive className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                        </ConfirmActionButton>
                       </form>
                     ) : config.hardDelete ? (
                       <form action={hardDeleteRecordAction.bind(null, config.key as ModuleKey, String(row.id))}>
-                        <button
+                        <ConfirmActionButton
                           className="inline-flex h-8 w-8 items-center justify-center border border-transparent text-zinc-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-                          aria-label="Delete"
-                          title="Delete"
+                          label="Delete"
+                          message={`Permanently delete this ${config.singular.toLowerCase()}? This cannot be undone.`}
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                        </ConfirmActionButton>
                       </form>
                     ) : null}
                   </div>
@@ -103,9 +105,9 @@ function ImageCell({ value }: { value: unknown }) {
   const imageUrl = typeof value === "string" && value ? value : "";
 
   return (
-    <div className="flex h-12 w-12 items-center justify-center overflow-hidden border border-zinc-200 bg-zinc-50 text-[10px] font-medium uppercase text-zinc-400">
+    <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden border border-zinc-200 bg-zinc-50 text-[10px] font-medium uppercase text-zinc-400">
       {imageUrl ? (
-        <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+        <Image src={imageUrl} alt="" fill sizes="48px" className="object-cover" />
       ) : (
         "None"
       )}

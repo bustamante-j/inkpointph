@@ -57,6 +57,10 @@ export default async function ReportsPage({ searchParams }: PageProps) {
         </ButtonLink>
       </form>
 
+      <div className="flex justify-end">
+        <ButtonLink href="/admin/reports/backup" variant="secondary">Download full JSON backup</ButtonLink>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Sales" value={formatCurrency(totalSales)} detail="Recorded payments" tone="dark" />
         <StatCard label="Expenses" value={formatCurrency(totalExpenses)} detail="Costs in range" />
@@ -65,7 +69,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <ReportCard title="Revenue by service type" rows={byService} money />
+        <ReportCard title="Order value by service type" rows={byService} money />
         <ReportCard title="Payment method summary" rows={byPayment} money />
         <ReportCard title="Project status summary" rows={byStatus} />
         <ReportCard title="Most requested services" rows={groupCount(data.projects, "service_type")} />

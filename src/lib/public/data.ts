@@ -1,5 +1,6 @@
 import {
   defaultFaqs,
+  defaultOrderFormOptions,
   defaultOrderStepItems,
   defaultPackages,
   defaultPriceItems,
@@ -9,13 +10,13 @@ import {
   defaultSiteSettings,
 } from "@/lib/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { SiteListItem, SiteSection, SiteSettings } from "@/types/site";
+import type { OrderFormOption, SiteListItem, SiteSection, SiteSettings } from "@/types/site";
 
 export async function getPublicSiteData() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return fallbackData();
 
-  const [settings, sections, services, products, packages, prices, faqs, steps] =
+  const [settings, sections, services, products, packages, prices, faqs, steps, orderFormOptions] =
     await Promise.all([
       supabase.from("site_settings").select("*").eq("id", "main").maybeSingle(),
       supabase
@@ -53,10 +54,18 @@ export async function getPublicSiteData() {
         .select("*")
         .eq("is_visible", true)
         .order("display_order", { ascending: true }),
+      supabase
+        .from("order_form_options")
+        .select("*")
+        .eq("is_available", true)
+        .order("field_key", { ascending: true })
+        .order("display_order", { ascending: true }),
     ]);
 
+  if (settings.error) return fallbackData();
+
   return {
-    settings: settings.error || !settings.data
+    settings: !settings.data
       ? ({ ...defaultSiteSettings } as SiteSettings)
       : (settings.data as SiteSettings),
     sections: sections.error
@@ -72,6 +81,9 @@ export async function getPublicSiteData() {
     steps: steps.error
       ? (defaultOrderStepItems as SiteListItem[])
       : (steps.data as SiteListItem[]),
+    orderFormOptions: orderFormOptions.error
+      ? (defaultOrderFormOptions as OrderFormOption[])
+      : (orderFormOptions.data as OrderFormOption[]),
   };
 }
 
@@ -120,5 +132,6 @@ function fallbackData() {
     prices: defaultPriceItems,
     faqs: defaultFaqs as SiteListItem[],
     steps: defaultOrderStepItems as SiteListItem[],
+    orderFormOptions: defaultOrderFormOptions as OrderFormOption[],
   };
 }

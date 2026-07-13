@@ -6,7 +6,7 @@ import {
   type ModuleConfig,
   type ModuleKey,
 } from "@/lib/admin/module-config";
-import type { AnyRecord, DashboardSummary, RelationOption } from "@/types/database";
+import type { AnyRecord, DashboardAnalytics, DashboardSummary, RelationOption } from "@/types/database";
 
 export type AdminFilters = {
   q?: string;
@@ -72,6 +72,16 @@ export async function fetchRecord(moduleKey: ModuleKey, id: string) {
         .createSignedUrl(String(record.payment_screenshot_path), 60 * 30);
       record.payment_screenshot_signed_url = screenshot?.signedUrl ?? null;
     }
+  }
+
+  if (moduleKey === "inventory" && record) {
+    const { data: transactions } = await supabase
+      .from("inventory_transactions")
+      .select("*")
+      .eq("inventory_item_id", id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    record.inventory_transactions = transactions ?? [];
   }
 
   return {
@@ -218,6 +228,7 @@ export async function fetchDashboardData() {
     unpaidOrders: 0,
     todaySales: 0,
     monthlySales: 0,
+    monthlyExpenses: 0,
     totalExpenses: 0,
     estimatedNetProfit: 0,
     lowStockItems: 0,
@@ -227,6 +238,12 @@ export async function fetchDashboardData() {
     return {
       configured: false,
       summary: emptySummary,
+      analytics: {
+        cashFlow: [],
+        onlineOrderStatus: [],
+        managedOrderStatus: [],
+        serviceDemand: [],
+      } as DashboardAnalytics,
       recentProjects: [] as AnyRecord[],
       recentOnlineOrders: [] as AnyRecord[],
       recentClients: [] as AnyRecord[],
@@ -236,9 +253,8 @@ export async function fetchDashboardData() {
     };
   }
 
-  const today = new Date();
-  const todayKey = today.toISOString().slice(0, 10);
-  const monthKey = today.toISOString().slice(0, 7);
+  const todayKey = dateKeyInTimeZone(new Date(), "Asia/Manila");
+  const monthKey = todayKey.slice(0, 7);
 
   const [clients, onlineOrders, projects, payments, expenses, inventory, logs] = await Promise.all([
     supabase.from("clients").select("*").neq("status", "archived").limit(1000),
@@ -251,9 +267,10 @@ export async function fetchDashboardData() {
       .from("projects_orders")
       .select("*, clients(full_name)")
       .neq("order_status", "archived")
+      .order("created_at", { ascending: false })
       .limit(1000),
-    supabase.from("payments").select("*").limit(1000),
-    supabase.from("expenses").select("*").limit(1000),
+    supabase.from("payments").select("*").order("payment_date", { ascending: false }).limit(1000),
+    supabase.from("expenses").select("*").order("expense_date", { ascending: false }).limit(1000),
     supabase
       .from("inventory_items")
       .select("*")
@@ -272,6 +289,7 @@ export async function fetchDashboardData() {
   const expenseRows = asRows(expenses.data);
   const todaySales = sumByDate(paymentRows, "payment_date", todayKey);
   const monthlySales = sumByMonth(paymentRows, "payment_date", monthKey);
+  const monthlyExpenses = sumByMonth(expenseRows, "expense_date", monthKey);
   const totalExpenses = expenseRows.reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
 
   const summary: DashboardSummary = {
@@ -290,14 +308,23 @@ export async function fetchDashboardData() {
     ).length,
     todaySales,
     monthlySales,
+    monthlyExpenses,
     totalExpenses,
-    estimatedNetProfit: monthlySales - totalExpenses,
+    estimatedNetProfit: monthlySales - monthlyExpenses,
     lowStockItems: inventory.data?.length ?? 0,
+  };
+
+  const analytics: DashboardAnalytics = {
+    cashFlow: buildCashFlowTrend(paymentRows, expenseRows, 30, todayKey),
+    onlineOrderStatus: countGroups(onlineOrderRows, "order_status"),
+    managedOrderStatus: countGroups(projectRows, "order_status"),
+    serviceDemand: countGroups([...onlineOrderRows, ...projectRows], "service_type").slice(0, 6),
   };
 
   return {
     configured: true,
     summary,
+    analytics,
     recentProjects: projectRows.slice(0, 8),
     recentOnlineOrders: onlineOrderRows.slice(0, 8),
     recentClients: asRows(clients.data).slice(0, 8),
@@ -313,6 +340,50 @@ export async function fetchDashboardData() {
       logs.error?.message ??
       null,
   };
+}
+
+function buildCashFlowTrend(
+  payments: AnyRecord[],
+  expenses: AnyRecord[],
+  days: number,
+  todayKey: string,
+) {
+  const rows: { date: string; sales: number; expenses: number }[] = [];
+  const currentDate = new Date(`${todayKey}T12:00:00Z`);
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const date = new Date(currentDate);
+    date.setUTCDate(date.getUTCDate() - offset);
+    const key = date.toISOString().slice(0, 10);
+    rows.push({
+      date: key.slice(5),
+      sales: sumByDate(payments, "payment_date", key),
+      expenses: sumByDate(expenses, "expense_date", key),
+    });
+  }
+  return rows;
+}
+
+function dateKeyInTimeZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function countGroups(rows: AnyRecord[], key: string) {
+  const groups = new Map<string, number>();
+  rows.forEach((row) => {
+    const label = String(row[key] ?? "not_applicable");
+    groups.set(label, (groups.get(label) ?? 0) + 1);
+  });
+  return [...groups.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
 }
 
 export async function fetchReportData(filters: AdminFilters = {}) {

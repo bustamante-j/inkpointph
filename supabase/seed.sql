@@ -1,9 +1,79 @@
-insert into public.services (name, description, starting_price, category, is_available, display_order)
+insert into public.site_settings (
+  id, business_name, location, address_note, motto, business_description,
+  hero_eyebrow, hero_title, hero_description, hero_image_url, logo_url, mascot_url,
+  messenger_url, facebook_url, facebook_name, email, hours, hours_note,
+  payment_instructions, walk_in_note, seo_title, seo_description
+)
+values (
+  'main', 'InkPoint Prints & Services', 'Crystal Cave, Baguio City', null,
+  'Prints that make a point.', 'Friendly and reliable printing for school, work, events, and everyday needs.',
+  'Printing made simple', 'Bring your ideas. We will put them on paper.',
+  'Choose a service, upload your file, review the calculated price, and attach your GCash payment screenshot.',
+  '/images/inkpoint-hero-bright.png', '/brand/logo/inkpoint-logo.png', '/brand/mascot/inkpoint-mascot.png',
+  'https://m.me/inkpointprints', 'https://web.facebook.com/people/InkPoint-Prints-Services/61590990023674/',
+  'InkPoint Prints and Services', 'inkpointph@gmail.com', '8:00 AM - 10:00 PM daily',
+  'Except when the shopkeeper has classes.', 'Online orders require a GCash payment screenshot before submission.',
+  'Walk-ins are always welcome. No registration or online order is required.',
+  'InkPoint Prints & Services | Printing in Baguio City',
+  'Printing, photocopy, photo printing, and certificate printing in Crystal Cave, Baguio City.'
+)
+on conflict (id) do update set
+  business_name = excluded.business_name,
+  email = excluded.email;
+
+insert into public.site_sections (section_key, title, is_visible, display_order)
 values
-  ('Printing', 'Upload your document and choose black and white or colored printing.', 5, 'Documents', true, 1),
-  ('Photocopy', 'Clear photocopies for school papers, IDs, forms, and office documents.', 3, 'Documents', true, 2),
-  ('Photo Printing', 'Photo prints from uploaded files, available in common sizes.', 50, 'Photo', true, 3),
-  ('Certificate Printing', 'Clean certificate printing for school, recognition, events, and office use.', 15, 'Events', true, 4)
+  ('order', 'Start your order', true, 1),
+  ('contact', 'Contact InkPoint', true, 2),
+  ('services', 'Services and prices', true, 3),
+  ('products', 'Print examples', true, 4),
+  ('packages', 'Helpful packages', true, 5),
+  ('process', 'How it works', true, 6),
+  ('faq', 'Quick answers', true, 7)
+on conflict (section_key) do nothing;
+
+insert into public.order_steps (title, description, is_visible, display_order)
+values
+  ('Choose', 'Select the service and print options you need.', true, 1),
+  ('Upload', 'Attach your document, image, or certificate file.', true, 2),
+  ('Pay', 'Review the calculated price and attach your GCash screenshot.', true, 3),
+  ('Track', 'Keep your order number and check the latest status anytime.', true, 4),
+  ('Collect', 'Pick up at the shop or arrange delivery when ready.', true, 5);
+
+insert into public.order_form_options (field_key, option_value, option_label, is_available, display_order)
+values
+  ('print_color', 'non_colored', 'Non-colored', true, 1),
+  ('print_color', 'colored', 'Colored', true, 2),
+  ('paper_size', 'short', 'Short', true, 1),
+  ('paper_size', 'a4', 'A4', true, 2),
+  ('paper_size', 'legal', 'Long / Legal', true, 3),
+  ('paper_size', 'custom', 'Custom / not sure', true, 4),
+  ('print_sides', 'single_sided', 'Single-sided', true, 1),
+  ('print_sides', 'double_sided', 'Double-sided', true, 2),
+  ('certificate_type', 'ready_to_print', 'Ready-to-print file', true, 1),
+  ('certificate_type', 'needs_name_edit', 'Needs name editing', true, 2),
+  ('certificate_type', 'needs_layout', 'Needs layout help', true, 3),
+  ('fulfillment', 'pickup', 'Pickup', true, 1),
+  ('fulfillment', 'delivery', 'Delivery', true, 2)
+on conflict (field_key, option_value) do nothing;
+
+insert into public.faq_items (question, answer, is_visible, display_order)
+values
+  ('Do you accept rush orders?', 'Yes, depending on the queue, file readiness, quantity, and available materials.', true, 1),
+  ('Can I send files online?', 'Yes. Upload your files directly in the order form.', true, 2),
+  ('Can I visit without ordering online?', 'Yes. Walk-ins are welcome and do not need an account.', true, 3),
+  ('How do I know when my order is ready?', 'Use your order number and the last four digits of your contact number on the Track Order page.', true, 4);
+
+insert into public.services (
+  name, slug, description, starting_price, category, image_url, pricing_summary,
+  quantity_label, requires_page_count, allows_color, requires_paper_size,
+  allows_sides, allows_photo_size, allows_certificate_type, is_available, display_order
+)
+values
+  ('Printing', 'printing', 'Upload your document and choose non-colored or colored printing.', 5, 'Documents', '/images/services/printing.png', 'PHP 5 non-colored / PHP 10 colored per page', 'Number of copies', true, true, true, true, false, false, true, 1),
+  ('Photocopy', 'photocopy', 'Clear photocopies for school papers, IDs, forms, and office documents.', 3, 'Documents', '/images/services/photocopy.png', 'PHP 3 non-colored / PHP 5 colored per page', 'Number of copies', true, true, true, true, false, false, true, 2),
+  ('Photo Printing', 'photo-printing', 'Photo prints from uploaded files, available in common sizes.', 50, 'Photo', '/images/services/photo-printing.png', 'PHP 50-100 per photo', 'Number of photos', false, false, false, false, true, false, true, 3),
+  ('Certificate Printing', 'certificate-printing', 'Clean certificate printing for school, recognition, events, and office use.', 15, 'Events', '/images/services/certificate-printing.png', 'PHP 15 per certificate', 'Number of certificates', false, true, true, false, false, true, true, 4)
 on conflict do nothing;
 
 insert into public.packages (name, description, included_services, starting_price, is_available, display_order)
@@ -22,14 +92,16 @@ values
   ('Certificates', 'Certificate prints for recognition, school, and event needs.', 15, 'Certificates', '/images/services/certificate-printing.png', true, 4)
 on conflict do nothing;
 
-insert into public.price_items (service_name, unit_label, price_label, category, is_available, display_order)
+insert into public.price_items (service_name, unit_label, price_label, category, option_key, unit_price, max_price, is_available, display_order)
 values
-  ('Printing', 'Non-colored per page', 'PHP 5.00', 'Documents', true, 1),
-  ('Printing', 'Colored per page', 'PHP 10.00', 'Documents', true, 2),
-  ('Photocopy', 'Non-colored per page', 'PHP 3.00', 'Documents', true, 3),
-  ('Photocopy', 'Colored per page', 'PHP 5.00', 'Documents', true, 4),
-  ('Photo Printing', 'Per photo', 'PHP 50.00-100.00', 'Photo', true, 5),
-  ('Certificate Printing', 'Per certificate', 'PHP 15.00', 'Events', true, 6)
+  ('Printing', 'Non-colored per page', 'PHP 5.00', 'Documents', 'non_colored', 5, null, true, 1),
+  ('Printing', 'Colored per page', 'PHP 10.00', 'Documents', 'colored', 10, null, true, 2),
+  ('Photocopy', 'Non-colored per page', 'PHP 3.00', 'Documents', 'non_colored', 3, null, true, 3),
+  ('Photocopy', 'Colored per page', 'PHP 5.00', 'Documents', 'colored', 5, null, true, 4),
+  ('Photo Printing', '2x2 photo', 'PHP 50.00', 'Photo', '2x2', 50, null, true, 5),
+  ('Photo Printing', '4R photo', 'PHP 75.00', 'Photo', '4r', 75, null, true, 6),
+  ('Photo Printing', '5R photo', 'PHP 100.00', 'Photo', '5r', 100, null, true, 7),
+  ('Certificate Printing', 'Per certificate', 'PHP 15.00', 'Events', 'default', 15, null, true, 8)
 on conflict do nothing;
 
 with inserted_clients as (

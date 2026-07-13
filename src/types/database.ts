@@ -22,9 +22,17 @@ export type DashboardSummary = {
   unpaidOrders: number;
   todaySales: number;
   monthlySales: number;
+  monthlyExpenses: number;
   totalExpenses: number;
   estimatedNetProfit: number;
   lowStockItems: number;
+};
+
+export type DashboardAnalytics = {
+  cashFlow: { date: string; sales: number; expenses: number }[];
+  onlineOrderStatus: { label: string; value: number }[];
+  managedOrderStatus: { label: string; value: number }[];
+  serviceDemand: { label: string; value: number }[];
 };
 
 export type RelationOption = {

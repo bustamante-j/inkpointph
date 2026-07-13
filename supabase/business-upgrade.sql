@@ -2,6 +2,14 @@ begin;
 
 create extension if not exists pgcrypto;
 
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 create table if not exists public.online_orders (
   id uuid primary key default gen_random_uuid(),
   customer_name text not null,
@@ -169,6 +177,49 @@ create table if not exists public.order_steps (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.order_form_options (
+  id uuid primary key default gen_random_uuid(),
+  field_key text not null,
+  option_value text not null,
+  option_label text not null,
+  is_available boolean not null default true,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (field_key, option_value)
+);
+
+create table if not exists public.inventory_transactions (
+  id uuid primary key default gen_random_uuid(),
+  inventory_item_id uuid not null references public.inventory_items(id) on delete cascade,
+  transaction_type text not null check (transaction_type in ('restock', 'adjustment', 'usage')),
+  quantity_change numeric not null,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+drop trigger if exists set_online_orders_updated_at on public.online_orders;
+create trigger set_online_orders_updated_at before update on public.online_orders
+for each row execute function public.set_updated_at();
+drop trigger if exists set_price_items_updated_at on public.price_items;
+create trigger set_price_items_updated_at before update on public.price_items
+for each row execute function public.set_updated_at();
+drop trigger if exists set_site_settings_updated_at on public.site_settings;
+create trigger set_site_settings_updated_at before update on public.site_settings
+for each row execute function public.set_updated_at();
+drop trigger if exists set_site_sections_updated_at on public.site_sections;
+create trigger set_site_sections_updated_at before update on public.site_sections
+for each row execute function public.set_updated_at();
+drop trigger if exists set_faq_items_updated_at on public.faq_items;
+create trigger set_faq_items_updated_at before update on public.faq_items
+for each row execute function public.set_updated_at();
+drop trigger if exists set_order_steps_updated_at on public.order_steps;
+create trigger set_order_steps_updated_at before update on public.order_steps
+for each row execute function public.set_updated_at();
+drop trigger if exists set_order_form_options_updated_at on public.order_form_options;
+create trigger set_order_form_options_updated_at before update on public.order_form_options
+for each row execute function public.set_updated_at();
+
 do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'online_orders_project_order_id_fkey') then
@@ -261,6 +312,48 @@ $$;
 
 revoke all on function public.lookup_online_order(text, text) from public;
 grant execute on function public.lookup_online_order(text, text) to anon, authenticated;
+
+create or replace function public.record_inventory_transaction(
+  target_item_id uuid,
+  transaction_kind text,
+  quantity_delta numeric,
+  transaction_notes text default null
+)
+returns public.inventory_items
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  updated_item public.inventory_items;
+begin
+  if not public.is_admin() then raise exception 'Admin access required'; end if;
+  if transaction_kind not in ('restock', 'adjustment', 'usage') then
+    raise exception 'Invalid inventory transaction type';
+  end if;
+
+  update public.inventory_items
+  set quantity = greatest(quantity + quantity_delta, 0),
+      status = case
+        when greatest(quantity + quantity_delta, 0) <= 0 then 'out_of_stock'
+        when greatest(quantity + quantity_delta, 0) <= minimum_stock_level then 'low_stock'
+        else 'in_stock'
+      end
+  where id = target_item_id
+  returning * into updated_item;
+
+  if updated_item.id is null then raise exception 'Inventory item not found'; end if;
+
+  insert into public.inventory_transactions (
+    inventory_item_id, transaction_type, quantity_change, notes
+  ) values (target_item_id, transaction_kind, quantity_delta, transaction_notes);
+
+  return updated_item;
+end;
+$$;
+
+revoke all on function public.record_inventory_transaction(uuid, text, numeric, text) from public;
+grant execute on function public.record_inventory_transaction(uuid, text, numeric, text) to authenticated;
 
 create or replace function public.convert_online_order_to_project(target_online_order_id uuid)
 returns uuid
@@ -380,6 +473,12 @@ alter table public.site_settings enable row level security;
 alter table public.site_sections enable row level security;
 alter table public.faq_items enable row level security;
 alter table public.order_steps enable row level security;
+alter table public.order_form_options enable row level security;
+alter table public.inventory_transactions enable row level security;
+
+drop policy if exists "profiles_select_own" on public.profiles;
+create policy "profiles_select_own" on public.profiles
+for select to authenticated using (id = auth.uid() or public.is_admin());
 
 drop policy if exists "profiles_update_own" on public.profiles;
 drop policy if exists "profiles_insert_self" on public.profiles;
@@ -390,6 +489,10 @@ for all to authenticated using (public.is_owner()) with check (public.is_owner()
 drop policy if exists "online_orders_public_insert" on public.online_orders;
 drop policy if exists "online_orders_admin_all" on public.online_orders;
 create policy "online_orders_admin_all" on public.online_orders
+for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "inventory_transactions_admin_all" on public.inventory_transactions;
+create policy "inventory_transactions_admin_all" on public.inventory_transactions
 for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "price_items_public_available_read" on public.price_items;
@@ -424,6 +527,13 @@ create policy "order_steps_public_read" on public.order_steps
 for select to anon, authenticated using (is_visible = true or public.is_admin());
 drop policy if exists "order_steps_admin_write" on public.order_steps;
 create policy "order_steps_admin_write" on public.order_steps
+for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "order_form_options_public_read" on public.order_form_options;
+create policy "order_form_options_public_read" on public.order_form_options
+for select to anon, authenticated using (is_available = true or public.is_admin());
+drop policy if exists "order_form_options_admin_write" on public.order_form_options;
+create policy "order_form_options_admin_write" on public.order_form_options
 for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -472,7 +582,7 @@ insert into public.site_settings (
 )
 values (
   'main', 'InkPoint Prints & Services', 'Crystal Cave, Baguio City',
-  'Exact shop address to follow.', 'Prints that make a point.',
+  null, 'Prints that make a point.',
   'Friendly and reliable printing for school, work, events, and everyday needs.',
   'Printing made simple', 'Bring your ideas. We will put them on paper.',
   'Choose a service, upload your file, review the calculated price, and attach your GCash payment screenshot.',
@@ -508,6 +618,23 @@ select * from (values
   ('Collect', 'Pick up at the shop or arrange delivery when ready.', true, 5)
 ) as seed(title, description, is_visible, display_order)
 where not exists (select 1 from public.order_steps);
+
+insert into public.order_form_options (field_key, option_value, option_label, is_available, display_order)
+values
+  ('print_color', 'non_colored', 'Non-colored', true, 1),
+  ('print_color', 'colored', 'Colored', true, 2),
+  ('paper_size', 'short', 'Short', true, 1),
+  ('paper_size', 'a4', 'A4', true, 2),
+  ('paper_size', 'legal', 'Long / Legal', true, 3),
+  ('paper_size', 'custom', 'Custom / not sure', true, 4),
+  ('print_sides', 'single_sided', 'Single-sided', true, 1),
+  ('print_sides', 'double_sided', 'Double-sided', true, 2),
+  ('certificate_type', 'ready_to_print', 'Ready-to-print file', true, 1),
+  ('certificate_type', 'needs_name_edit', 'Needs name editing', true, 2),
+  ('certificate_type', 'needs_layout', 'Needs layout help', true, 3),
+  ('fulfillment', 'pickup', 'Pickup', true, 1),
+  ('fulfillment', 'delivery', 'Delivery', true, 2)
+on conflict (field_key, option_value) do nothing;
 
 insert into public.faq_items (question, answer, is_visible, display_order)
 select * from (values

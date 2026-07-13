@@ -1,21 +1,21 @@
 # InkPoint Prints & Services
 
-Professional MVP website and admin management system for **InkPoint Prints & Services** in Crystal Cave, Baguio City.
+Public printing website and owner-only business management system for InkPoint Prints & Services in Crystal Cave, Baguio City.
 
-The app has:
+## What It Includes
 
-- Public business website for services, packages, pricing, contact details, online order booking, file uploads, FAQ, and Messenger inquiries.
-- Admin-only dashboard for online orders, clients, projects/orders, payments, expenses, inventory, products with images, services/packages, public prices, reports, activity logs, and settings.
-- Supabase Auth, Supabase database schema, Row Level Security policy suggestions, and seed data.
+- Public service catalog, exact price list, product gallery, packages, contact details, FAQs, and editable page sections.
+- Payment-first online ordering with service-specific choices, calculated totals, private file uploads, and a GCash screenshot.
+- Privacy-safe order tracking using an order number and the last four digits of the customer's contact number.
+- Owner dashboard for online requests, managed orders, clients, payments, expenses, stock, catalog content, reports, backups, and activity logs.
+- Website Manager for hero media, logo, mascot, colors, contact details, services, prices, products, packages, order choices, steps, and FAQs.
+- Data-driven cash-flow, order-status, and service-demand charts.
 
 ## Stack
 
-- Next.js 16 App Router
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- Supabase Auth and Postgres
-- Lucide React icons
+- Next.js 16 App Router, React 19, TypeScript, and Tailwind CSS 4
+- Supabase Auth, Postgres, Row Level Security, RPC functions, and Storage
+- Recharts, Lucide React, Zod, and Vitest
 
 ## Local Setup
 
@@ -25,39 +25,24 @@ The app has:
 npm install
 ```
 
-2. Create `.env.local` from `.env.example`:
-
-```bash
-cp .env.example .env.local
-```
-
-3. Fill in:
+2. Create `.env.local` from `.env.example` and provide:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_MESSENGER_LINK=
-NEXT_PUBLIC_FACEBOOK_PAGE=
-NEXT_PUBLIC_BUSINESS_EMAIL=
-NEXT_PUBLIC_BUSINESS_PHONE=
-NEXT_PUBLIC_WEBSITE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Do not expose `SUPABASE_SERVICE_ROLE_KEY` to the browser. This MVP does not require it for normal app use.
+`SUPABASE_SERVICE_ROLE_KEY` is server-only. Never prefix it with `NEXT_PUBLIC_`, commit it, or paste it into browser code.
 
-4. In Supabase SQL Editor, run:
+3. Configure the database:
 
-```sql
--- supabase/schema.sql
-```
+- New Supabase project: run all of `supabase/schema.sql` in SQL Editor.
+- Existing InkPoint database: run all of `supabase/business-upgrade.sql` in SQL Editor.
+- Optional sample records: run `supabase/seed.sql` only when demo data is wanted.
 
-5. Optional seed data:
-
-```sql
--- supabase/seed.sql
-```
-
-6. Start locally:
+4. Start the app:
 
 ```bash
 npm run dev
@@ -65,113 +50,81 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Required Supabase Tables
+## Create the Owner Account
 
-The schema creates:
-
-- `profiles`
-- `clients`
-- `online_orders`
-- `projects_orders`
-- `payments`
-- `expenses`
-- `inventory_items`
-- `inventory_transactions`
-- `products`
-- `price_items`
-- `services`
-- `packages`
-- `activity_logs`
-- `order_timeline_entries`
-
-The schema also creates public Supabase Storage buckets:
-
-- `product-images` lets admins upload product photos and lets visitors view those product images.
-- `order-uploads` lets visitors attach order files and GCash screenshots to public order bookings.
-
-Private admin tables have RLS enabled. Public reads are allowed only for available catalog records. Visitors can insert new `online_orders`, while only admins can view and update them.
-
-## Create the Admin Account
-
-1. In Supabase Dashboard, go to Authentication.
-2. Create a user for the owner/admin email.
-3. Copy that user's UUID.
-4. Insert the matching profile row:
+1. In Supabase, open **Authentication > Users** and create the owner user.
+2. Copy the new user's UUID.
+3. Run this in SQL Editor:
 
 ```sql
 insert into public.profiles (id, full_name, role)
-values ('PASTE-AUTH-USER-UUID-HERE', 'InkPoint Owner', 'owner');
+values ('PASTE-AUTH-USER-UUID', 'InkPoint Owner', 'owner')
+on conflict (id) do update
+set full_name = excluded.full_name, role = 'owner';
 ```
 
-5. Sign in at `/login`.
+4. In **Authentication > Providers > Email**, disable public user signups if no additional admins should register.
+5. Sign in at `/login`. Customers never need accounts.
 
-Only authenticated users with `profiles.role` of `owner` or `admin` can access private business records under the included RLS policies.
+Profile roles cannot be assigned by ordinary signed-in users. Owner-level access is required to manage administrator profiles.
 
-## App Routes
+## Secure Order Flow
 
-Public:
+1. The customer selects a published service and its applicable choices.
+2. The calculator uses active rows from `price_items`.
+3. Order files and payment proof are uploaded by a server action to the private `order-uploads` bucket.
+4. The server creates the public request using the server-only service role.
+5. The owner verifies payment and updates the public status.
+6. The owner converts an accepted request into a client, managed order, and payment record.
+7. The customer tracks progress without an account.
 
-- `/`
+The browser cannot list private customer files. Admin file previews use short-lived signed URLs.
 
-Admin:
+## Important Admin Routes
 
-- `/login`
-- `/admin/dashboard`
-- `/admin/online-orders`
-- `/admin/clients`
-- `/admin/projects`
-- `/admin/payments`
-- `/admin/expenses`
-- `/admin/inventory`
-- `/admin/products`
-- `/admin/services`
-- `/admin/prices`
-- `/admin/reports`
-- `/admin/logs`
-- `/admin/settings`
-- `/admin/logout`
+- `/admin/dashboard` overview, alerts, charts, and quick actions
+- `/admin/website` public website content and media
+- `/admin/order-options` public order-form choices
+- `/admin/online-orders` incoming paid requests
+- `/admin/projects` managed production orders
+- `/admin/clients`, `/admin/payments`, and `/admin/expenses`
+- `/admin/inventory` stock levels and stock-movement history
+- `/admin/products`, `/admin/services`, and `/admin/prices`
+- `/admin/reports` CSV exports and full JSON backup
+- `/admin/logs` audit trail
+- `/admin/settings` security and environment checks
 
-## Business Rules Implemented
+## Vercel Deployment
 
-- Customers do not create accounts.
-- Customers can submit a payment-first online order from the public website.
-- Customers can upload order files and a GCash payment screenshot through the website.
-- Online order statuses are updated by the admin as `pending`, `working_on_it`, `ready_for_pickup`, `completed`, or `cancelled`.
-- Walk-ins are welcome; customers do not need to register or order online before visiting.
-- Only the owner/admin signs in to the dashboard.
-- Product photos are uploaded by the admin in `/admin/products` and displayed on the public website.
-- Products, packages, services, and prices can be changed in the admin dashboard and will reflect on the public website.
-- Payments are manually recorded by the admin.
-- Projects/orders store timeline notes and relevant activity logs.
-- Payment totals update order `amount_paid`, `balance_due`, and `payment_status`.
-- Inventory status is derived from quantity and minimum stock level.
-- Activity logs are created for important create/update/archive/delete/payment/note/logout actions.
+1. Import the GitHub repository into Vercel.
+2. Add these Production, Preview, and Development variables:
 
-## Deployment Later
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
+NEXT_PUBLIC_SITE_URL=https://YOUR_DOMAIN
+```
 
-1. Push the project to GitHub.
-2. Import it into Vercel.
-3. Add the same environment variables in Vercel Project Settings.
-4. Make sure Supabase Auth redirect URLs include:
+3. Add optional business fallback variables from `.env.example` when needed.
+4. In Supabase **Authentication > URL Configuration**, set the production site URL and add:
 
 ```text
 http://localhost:3000/**
-https://your-production-domain.com/**
+https://YOUR_DOMAIN/**
 ```
 
-5. Run the Supabase schema in the production Supabase project.
-6. Create the production owner account and profile row.
+5. Run `supabase/business-upgrade.sql` in the production Supabase project if it has the older schema.
+6. Redeploy from Vercel after environment variables or schema changes.
+7. Verify `/`, `/track-order`, `/login`, `/admin/dashboard`, and one private file preview.
 
-## Updating an Existing Supabase Database
+## Quality Checks
 
-If you already ran the original schema before product photo support was added, run:
-
-```sql
--- supabase/product-images-migration.sql
+```bash
+npm run lint
+npm test
+npm run build
+npm audit
 ```
 
-This adds the `products` table, `price_items` table, `online_orders` file-upload columns, product image storage bucket, order upload storage bucket, and required policies without requiring seed data.
-
-## Notes
-
-The UI shows a Supabase setup notice when env variables are missing. The public site still renders with local default services and packages, while admin data becomes live after Supabase is configured.
+The app renders a complete local fallback catalog when public content tables are not available, but live online orders and admin editing require the database migration and service-role environment variable.

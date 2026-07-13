@@ -10,6 +10,10 @@ export function isSupabaseConfigured() {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
 
+export function isServiceRoleConfigured() {
+  return Boolean(supabaseUrl && supabaseServiceRoleKey);
+}
+
 export async function createSupabaseServerClient() {
   if (!supabaseUrl || !supabaseAnonKey) return null;
 

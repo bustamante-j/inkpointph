@@ -89,6 +89,7 @@ export type ModuleKey =
   | "services"
   | "packages"
   | "prices"
+  | "orderOptions"
   | "logs";
 
 const statusOptions = (values: string[]) =>
@@ -730,6 +731,47 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       money("max_price", "Maximum price (optional)"),
       { name: "category", label: "Category", type: "text" },
       { name: "is_available", label: "Show on public website", type: "checkbox" },
+      { name: "display_order", label: "Display order", type: "number", min: 0 },
+    ],
+  },
+  orderOptions: {
+    key: "orderOptions",
+    path: "order-options",
+    table: "order_form_options",
+    title: "Order Form Choices",
+    singular: "Order Form Choice",
+    description: "Manage the selectable choices customers see while placing an order.",
+    select: "*",
+    orderBy: { column: "field_key", ascending: true },
+    searchFields: ["field_key", "option_value", "option_label"],
+    creatable: true,
+    editable: true,
+    hardDelete: true,
+    columns: [
+      { label: "Field", value: (row) => row.field_key, format: "status" },
+      { label: "Customer label", value: (row) => row.option_label },
+      { label: "Value", value: (row) => row.option_value },
+      { label: "Available", value: (row) => row.is_available, format: "boolean" },
+      { label: "Order", value: (row) => row.display_order },
+    ],
+    detailFields: [
+      { label: "Field", value: (row) => row.field_key, format: "status" },
+      { label: "Customer label", value: (row) => row.option_label },
+      { label: "Stored value", value: (row) => row.option_value },
+      { label: "Available", value: (row) => row.is_available, format: "boolean" },
+      { label: "Display order", value: (row) => row.display_order },
+    ],
+    formFields: [
+      {
+        name: "field_key",
+        label: "Order field",
+        type: "select",
+        required: true,
+        options: statusOptions(["print_color", "paper_size", "print_sides", "certificate_type", "fulfillment"]),
+      },
+      { name: "option_label", label: "Customer-facing label", type: "text", required: true },
+      { name: "option_value", label: "Stored value", type: "text", required: true, help: "Use a short lowercase value with underscores, such as glossy_photo." },
+      { name: "is_available", label: "Available in the public form", type: "checkbox" },
       { name: "display_order", label: "Display order", type: "number", min: 0 },
     ],
   },

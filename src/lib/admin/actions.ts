@@ -41,6 +41,7 @@ export async function createRecordAction(moduleKey: ModuleKey, formData: FormDat
   });
 
   revalidatePath(`/admin/${config.path}`);
+  revalidatePublicWebsite(moduleKey);
   redirect(`/admin/${config.path}/${recordId}?saved=1`);
 }
 
@@ -54,7 +55,7 @@ export async function updateRecordAction(
   uuidSchema.parse(id);
 
   const supabase = await requireAdminSupabaseClient();
-  const payload = await buildPayload(moduleKey, formData, id);
+  const payload = await buildPayload(moduleKey, formData);
 
   const { data, error } = await supabase
     .from(config.table)
@@ -83,6 +84,7 @@ export async function updateRecordAction(
 
   revalidatePath(`/admin/${config.path}`);
   revalidatePath(`/admin/${config.path}/${id}`);
+  revalidatePublicWebsite(moduleKey);
   redirect(`/admin/${config.path}/${id}?saved=1`);
 }
 
@@ -119,6 +121,7 @@ export async function archiveRecordAction(moduleKey: ModuleKey, id: string) {
   });
 
   revalidatePath(`/admin/${config.path}`);
+  revalidatePublicWebsite(moduleKey);
   redirect(`/admin/${config.path}?archived=1`);
 }
 
@@ -153,6 +156,7 @@ export async function hardDeleteRecordAction(moduleKey: ModuleKey, id: string) {
   });
 
   revalidatePath(`/admin/${config.path}`);
+  revalidatePublicWebsite(moduleKey);
   redirect(`/admin/${config.path}?deleted=1`);
 }
 
@@ -243,6 +247,36 @@ export async function convertOnlineOrderAction(onlineOrderId: string) {
   redirect(`/admin/projects/${projectId}`);
 }
 
+export async function adjustInventoryAction(itemId: string, formData: FormData) {
+  uuidSchema.parse(itemId);
+  const kind = z.enum(["restock", "usage", "adjustment"]).parse(formData.get("transaction_type"));
+  const entered = z.coerce.number().refine((value) => value !== 0, "Quantity change cannot be zero.").parse(formData.get("quantity_change"));
+  const quantityDelta = kind === "restock" ? Math.abs(entered) : kind === "usage" ? -Math.abs(entered) : entered;
+  const notes = emptyToNull(formData.get("notes"));
+  const supabase = await requireAdminSupabaseClient();
+
+  const { error } = await supabase.rpc("record_inventory_transaction", {
+    target_item_id: itemId,
+    transaction_kind: kind,
+    quantity_delta: quantityDelta,
+    transaction_notes: notes,
+  });
+  if (error) throw new Error(error.message);
+
+  await logActivity({
+    action_type: "inventory_updated",
+    module: "inventory_items",
+    record_id: itemId,
+    record_label: "Inventory adjustment",
+    description: `${kind} inventory by ${quantityDelta}.`,
+    metadata: { transaction_type: kind, quantity_change: quantityDelta, notes },
+  });
+
+  revalidatePath(`/admin/inventory/${itemId}`);
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/dashboard");
+}
+
 export async function logoutAction() {
   const supabase = await requireAdminSupabaseClient();
   await logActivity({
@@ -257,7 +291,7 @@ export async function logoutAction() {
   redirect("/login");
 }
 
-async function buildPayload(moduleKey: ModuleKey, formData: FormData, id?: string) {
+async function buildPayload(moduleKey: ModuleKey, formData: FormData) {
   const config = moduleConfigs[moduleKey];
   const payload: AnyRecord = {};
 
@@ -281,9 +315,6 @@ async function buildPayload(moduleKey: ModuleKey, formData: FormData, id?: strin
     );
     payload.file_received_via_messenger = Boolean(payload.file_received_via_messenger);
 
-    if (!id) {
-      payload.order_number = await generateOrderNumber();
-    }
   }
 
   if (moduleKey === "inventory") {
@@ -298,6 +329,26 @@ async function buildPayload(moduleKey: ModuleKey, formData: FormData, id?: strin
 
   if (moduleKey === "payments") {
     payload.amount = Number(payload.amount ?? 0);
+  }
+
+  if (moduleKey === "orderOptions") {
+    const fieldKey = String(payload.field_key ?? "");
+    const optionValue = String(payload.option_value ?? "").trim().toLowerCase();
+    const allowedFields = new Set([
+      "print_color",
+      "paper_size",
+      "print_sides",
+      "certificate_type",
+      "fulfillment",
+    ]);
+    if (!allowedFields.has(fieldKey)) throw new Error("Choose a valid order field.");
+    if (!/^[a-z0-9_]+$/.test(optionValue)) {
+      throw new Error("Stored value can contain lowercase letters, numbers, and underscores only.");
+    }
+    if (fieldKey === "fulfillment" && !["pickup", "delivery"].includes(optionValue)) {
+      throw new Error("Fulfillment values must be pickup or delivery.");
+    }
+    payload.option_value = optionValue;
   }
 
   return payload;
@@ -315,7 +366,16 @@ async function parseFieldValue(field: FieldConfig, formData: FormData) {
   }
 
   if (field.type === "checkbox") return rawValue === "on";
-  if (field.type === "number") return toNumber(rawValue);
+  if (field.type === "number") {
+    const value = toNumber(rawValue);
+    if (field.min !== undefined && value < field.min) {
+      throw new Error(`${field.label} must be at least ${field.min}.`);
+    }
+    return value;
+  }
+  if (field.type === "email" && rawValue) {
+    return z.string().trim().email(`${field.label} must be a valid email.`).parse(rawValue);
+  }
   if (field.type === "multiline") {
     return String(rawValue ?? "")
       .split(/\r?\n|,/)
@@ -388,19 +448,6 @@ function getImageExtension(file: File) {
 function emptyToNull(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text === "" ? null : text;
-}
-
-async function generateOrderNumber() {
-  const supabase = await requireAdminSupabaseClient();
-  const dateKey = new Date().toISOString().slice(0, 10).replaceAll("-", "");
-  const prefix = `IP-${dateKey}`;
-
-  const { count } = await supabase
-    .from("projects_orders")
-    .select("id", { count: "exact", head: true })
-    .like("order_number", `${prefix}-%`);
-
-  return `${prefix}-${String((count ?? 0) + 1).padStart(3, "0")}`;
 }
 
 async function refreshOrderPaymentTotals(orderId: string) {
@@ -477,5 +524,12 @@ function getRecordLabel(moduleKey: ModuleKey, record: AnyRecord) {
   if (moduleKey === "services") return String(record.name ?? "service");
   if (moduleKey === "packages") return String(record.name ?? "package");
   if (moduleKey === "prices") return String(record.service_name ?? "price item");
+  if (moduleKey === "orderOptions") return String(record.option_label ?? "order form choice");
   return String(record.id ?? "record");
+}
+
+function revalidatePublicWebsite(moduleKey: ModuleKey) {
+  if (["services", "packages", "products", "prices", "orderOptions"].includes(moduleKey)) {
+    revalidatePath("/");
+  }
 }

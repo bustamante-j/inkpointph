@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import {
   formatColumnValue,
@@ -72,8 +73,8 @@ function DetailImage({ value }: { value: unknown }) {
   }
 
   return (
-    <div className="max-w-sm overflow-hidden border border-zinc-200 bg-zinc-50">
-      <img src={imageUrl} alt="" className="aspect-[4/3] w-full object-cover" />
+    <div className="relative aspect-[4/3] max-w-sm overflow-hidden border border-zinc-200 bg-zinc-50">
+      <Image src={imageUrl} alt="Uploaded record image" fill sizes="384px" className="object-cover" />
     </div>
   );
 }

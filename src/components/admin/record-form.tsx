@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SubmitButton } from "@/components/ui/submit-button";
 import {
   createRecordAction,
@@ -24,7 +25,6 @@ export function RecordForm({
   return (
     <form
       action={action}
-      encType="multipart/form-data"
       className="space-y-6 border border-red-900/20 bg-white p-5 shadow-sm shadow-red-950/5"
     >
       <div className="grid gap-4 md:grid-cols-2">
@@ -139,12 +139,14 @@ function FieldControl({
       <label className="block md:col-span-2">
         {label}
         <div className="mt-1.5 grid gap-4 border border-red-900/15 bg-[#fff7ed] p-3 sm:grid-cols-[9rem_1fr] sm:items-center">
-          <div className="flex aspect-square items-center justify-center overflow-hidden border border-red-900/15 bg-white text-xs font-medium text-zinc-400">
+          <div className="relative flex aspect-square items-center justify-center overflow-hidden border border-red-900/15 bg-white text-xs font-medium text-zinc-400">
             {imageUrl ? (
-              <img
+              <Image
                 src={imageUrl}
-                alt=""
-                className="h-full w-full object-cover"
+                alt="Current uploaded image"
+                fill
+                sizes="144px"
+                className="object-cover"
               />
             ) : (
               "No image"

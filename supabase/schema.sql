@@ -269,6 +269,18 @@ create table if not exists public.order_steps (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.order_form_options (
+  id uuid primary key default gen_random_uuid(),
+  field_key text not null,
+  option_value text not null,
+  option_label text not null,
+  is_available boolean not null default true,
+  display_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (field_key, option_value)
+);
+
 create table if not exists public.activity_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
@@ -372,6 +384,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists set_order_steps_updated_at on public.order_steps;
 create trigger set_order_steps_updated_at
 before update on public.order_steps
+for each row execute function public.set_updated_at();
+
+drop trigger if exists set_order_form_options_updated_at on public.order_form_options;
+create trigger set_order_form_options_updated_at
+before update on public.order_form_options
 for each row execute function public.set_updated_at();
 
 create or replace function public.is_admin()
@@ -732,6 +749,7 @@ alter table public.site_settings enable row level security;
 alter table public.site_sections enable row level security;
 alter table public.faq_items enable row level security;
 alter table public.order_steps enable row level security;
+alter table public.order_form_options enable row level security;
 alter table public.activity_logs enable row level security;
 alter table public.order_timeline_entries enable row level security;
 
@@ -876,6 +894,17 @@ using (is_visible = true or public.is_admin());
 
 drop policy if exists "order_steps_admin_write" on public.order_steps;
 create policy "order_steps_admin_write" on public.order_steps
+for all to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "order_form_options_public_read" on public.order_form_options;
+create policy "order_form_options_public_read" on public.order_form_options
+for select to anon, authenticated
+using (is_available = true or public.is_admin());
+
+drop policy if exists "order_form_options_admin_write" on public.order_form_options;
+create policy "order_form_options_admin_write" on public.order_form_options
 for all to authenticated
 using (public.is_admin())
 with check (public.is_admin());

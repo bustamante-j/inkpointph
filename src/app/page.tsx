@@ -61,7 +61,7 @@ export default async function Home({ searchParams }: HomeProps) {
               <Search className="h-4 w-4" /> Track an order
             </Link>
           </div>
-          <OnlineOrderForm services={services} prices={prices} paymentInstructions={settings.payment_instructions} />
+          <OnlineOrderForm services={services} prices={prices} options={data.orderFormOptions} paymentInstructions={settings.payment_instructions} />
         </div>
       </PublicSection>
     ),
@@ -135,7 +135,24 @@ export default async function Home({ searchParams }: HomeProps) {
   };
 
   return (
-    <main className="public-site min-h-screen bg-[var(--site-background)] text-zinc-950" style={cssVariables}>
+    <main className="public-site min-h-screen bg-[var(--site-background)] pb-16 text-zinc-950 md:pb-0" style={cssVariables}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: settings.business_name,
+            description: settings.business_description,
+            email: settings.email,
+            telephone: settings.phone || undefined,
+            address: settings.location,
+            url: settings.website_url || undefined,
+            sameAs: [settings.facebook_url].filter(Boolean),
+            openingHours: settings.hours,
+          }).replaceAll("<", "\\u003c"),
+        }}
+      />
       {settings.announcement ? <div className="bg-[var(--site-primary)] px-4 py-2 text-center text-xs font-semibold text-white">{settings.announcement}</div> : null}
       {query.admin === "unauthorized" ? <div className="border-b border-amber-700/20 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900">That account is signed in but does not have owner or admin permission.</div> : null}
 
@@ -181,6 +198,10 @@ export default async function Home({ searchParams }: HomeProps) {
           <div className="flex flex-col items-start gap-2 text-sm"><Link href="/track-order" className="font-semibold hover:underline">Track an order</Link><Link href="/login" className="text-red-200 hover:text-white">Owner login</Link></div>
         </div>
       </footer>
+      <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 border-t border-red-900/20 bg-white p-2 shadow-[0_-8px_24px_rgba(59,7,11,0.12)] md:hidden">
+        <a href="#online-order" className="inline-flex h-11 items-center justify-center bg-[var(--site-primary)] px-3 text-sm font-black text-white">Order now</a>
+        {settings.messenger_url ? <a href={settings.messenger_url} className="inline-flex h-11 items-center justify-center gap-2 border border-red-900/20 px-3 text-sm font-black text-red-950"><MessageCircle className="h-4 w-4" /> Messenger</a> : <Link href="/track-order" className="inline-flex h-11 items-center justify-center border border-red-900/20 px-3 text-sm font-black text-red-950">Track order</Link>}
+      </div>
     </main>
   );
 }

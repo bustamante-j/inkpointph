@@ -52,13 +52,14 @@ export default async function WebsiteManagerPage({ searchParams }: PageProps) {
         ))}
       </nav>
 
-      <section className="grid gap-3 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <ManagerLink href="/admin/services" title="Services & Packages" copy="Offerings, descriptions, availability, and order options." />
         <ManagerLink href="/admin/prices" title="Price Calculator" copy="Price rows used by the public estimate and price table." />
         <ManagerLink href="/admin/products" title="Product Photos" copy="Public gallery items, images, prices, and availability." />
+        <ManagerLink href="/admin/order-options" title="Order Form Choices" copy="Color, paper, print-side, certificate, pickup, and delivery choices." />
       </section>
 
-      <form id="business-content" action={updateSiteSettingsAction} encType="multipart/form-data" className="border border-red-900/20 bg-white">
+      <form id="business-content" action={updateSiteSettingsAction} className="border border-red-900/20 bg-white">
         <EditorHeader title="Brand, hero, and contact" copy="Core business information and the first content customers see." />
         <div className="grid gap-5 p-5 lg:grid-cols-2">
           <Field label="Business name" name="business_name" value={settings.business_name} required />

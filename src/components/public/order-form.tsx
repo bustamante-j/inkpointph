@@ -9,7 +9,7 @@ import {
   type OnlineOrderState,
 } from "@/lib/public/actions";
 import { calculateOrderEstimate } from "@/lib/public/pricing";
-import type { PublicPriceItem, PublicService } from "@/types/site";
+import type { OrderFormOption, PublicPriceItem, PublicService } from "@/types/site";
 
 const initialState: OnlineOrderState = { status: "idle", message: "" };
 const inputClass =
@@ -20,19 +20,26 @@ const fileClass =
 export function OnlineOrderForm({
   services,
   prices,
+  options,
   paymentInstructions,
 }: {
   services: PublicService[];
   prices: PublicPriceItem[];
+  options: OrderFormOption[];
   paymentInstructions?: string | null;
 }) {
+  const colorOptions = getManagedOptions(options, "print_color");
+  const paperSizeOptions = getManagedOptions(options, "paper_size");
+  const printSideOptions = getManagedOptions(options, "print_sides");
+  const certificateOptions = getManagedOptions(options, "certificate_type");
+  const fulfillmentOptions = getManagedOptions(options, "fulfillment");
   const [state, action] = useActionState(submitOnlineOrderAction, initialState);
   const [serviceType, setServiceType] = useState(services[0]?.name ?? "");
   const [quantity, setQuantity] = useState(1);
   const [pageCount, setPageCount] = useState(1);
-  const [printColor, setPrintColor] = useState("non_colored");
+  const [printColor, setPrintColor] = useState(colorOptions[0]?.value ?? "");
   const [photoSize, setPhotoSize] = useState("2x2");
-  const [delivery, setDelivery] = useState("pickup");
+  const [delivery, setDelivery] = useState(fulfillmentOptions[0]?.value ?? "");
 
   const service = useMemo(
     () => services.find((item) => item.name === serviceType) ?? services[0],
@@ -42,12 +49,15 @@ export function OnlineOrderForm({
     () => prices.filter((price) => price.service_name === serviceType && price.option_key),
     [prices, serviceType],
   );
+  const activePhotoSize = photoSizes.some((price) => price.option_key === photoSize)
+    ? photoSize
+    : photoSizes[0]?.option_key ?? "";
   const estimate = useMemo(
     () => calculateOrderEstimate(
-      { serviceType, quantity, pageCount, printColor, photoSize },
+      { serviceType, quantity, pageCount, printColor, photoSize: activePhotoSize },
       prices,
     ),
-    [serviceType, quantity, pageCount, printColor, photoSize, prices],
+    [serviceType, quantity, pageCount, printColor, activePhotoSize, prices],
   );
 
   if (!service) {
@@ -72,7 +82,7 @@ export function OnlineOrderForm({
   }
 
   return (
-    <form action={action} encType="multipart/form-data" className="border border-red-900/20 bg-[#fffdf8] p-5 shadow-sm shadow-red-950/5 sm:p-6">
+    <form action={action} className="border border-red-900/20 bg-[#fffdf8] p-5 shadow-sm shadow-red-950/5 sm:p-6">
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
 
       {state.status === "error" ? <div className="mb-5 border border-rose-700/25 bg-rose-50 p-4 text-sm font-semibold text-rose-800" aria-live="polite">{state.message}</div> : null}
@@ -87,14 +97,14 @@ export function OnlineOrderForm({
         <Field label={service.quantity_label || "Quantity"} name="quantity" type="number" min="1" defaultValue="1" required onNumberChange={setQuantity} />
 
         {service.requires_page_count ? <Field label="Number of pages" name="page_count" type="number" min="1" defaultValue="1" required onNumberChange={setPageCount} /> : null}
-        {service.allows_color ? <SelectField label="Color option" name="print_color" required value={printColor} onChange={setPrintColor} options={[{ value: "non_colored", label: "Non-colored" }, { value: "colored", label: "Colored" }]} /> : null}
-        {service.requires_paper_size ? <SelectField label="Paper size" name="paper_size" required options={[{ value: "short", label: "Short" }, { value: "a4", label: "A4" }, { value: "legal", label: "Long / Legal" }, { value: "custom", label: "Custom / not sure" }]} /> : null}
-        {service.allows_sides ? <SelectField label="Print sides" name="print_sides" required options={[{ value: "single_sided", label: "Single-sided" }, { value: "double_sided", label: "Double-sided" }]} /> : null}
-        {service.allows_photo_size ? <SelectField label="Photo size" name="photo_size" required value={photoSize} onChange={setPhotoSize} options={photoSizes.length ? photoSizes.map((item) => ({ value: item.option_key ?? "default", label: `${item.unit_label} - ${item.price_label}` })) : [{ value: "2x2", label: "2x2" }, { value: "4r", label: "4R" }, { value: "5r", label: "5R" }]} /> : null}
-        {service.allows_certificate_type ? <SelectField label="Certificate type" name="certificate_type" required options={[{ value: "ready_to_print", label: "Ready-to-print file" }, { value: "needs_name_edit", label: "Needs name editing" }, { value: "needs_layout", label: "Needs layout help" }]} /> : null}
+        {service.allows_color ? <SelectField label="Color option" name="print_color" required value={printColor} onChange={setPrintColor} options={colorOptions} /> : null}
+        {service.requires_paper_size ? <SelectField label="Paper size" name="paper_size" required options={paperSizeOptions} /> : null}
+        {service.allows_sides ? <SelectField label="Print sides" name="print_sides" required options={printSideOptions} /> : null}
+        {service.allows_photo_size ? <SelectField label="Photo size" name="photo_size" required value={activePhotoSize} onChange={setPhotoSize} options={photoSizes.map((item) => ({ value: item.option_key ?? "default", label: `${item.unit_label} - ${item.price_label}` }))} /> : null}
+        {service.allows_certificate_type ? <SelectField label="Certificate type" name="certificate_type" required options={certificateOptions} /> : null}
 
         <Field label="Needed by" name="needed_by" type="date" min={new Date().toISOString().slice(0, 10)} />
-        <SelectField label="Pickup or delivery" name="pickup_or_delivery" required value={delivery} onChange={setDelivery} options={[{ value: "pickup", label: "Pickup" }, { value: "delivery", label: "Delivery" }]} />
+        <SelectField label="Pickup or delivery" name="pickup_or_delivery" required value={delivery} onChange={setDelivery} options={fulfillmentOptions} />
         {delivery === "delivery" ? <Field label="Delivery address / landmark" name="delivery_address" required /> : null}
 
         <label className="flex min-h-11 items-center gap-3 border border-red-900/15 bg-white px-3 text-sm font-semibold text-zinc-800">
@@ -147,4 +157,11 @@ function Field({ label, name, type = "text", required, min, defaultValue, onNumb
 
 function SelectField({ label, name, required, options, value, onChange }: { label: string; name: string; required?: boolean; options: { value: string; label: string }[]; value?: string; onChange?: (value: string) => void }) {
   return <label className="block"><span className="text-sm font-semibold text-zinc-800">{label}{required ? " *" : ""}</span><select name={name} required={required} value={value} onChange={onChange ? (event) => onChange(event.target.value) : undefined} defaultValue={value === undefined ? options[0]?.value : undefined} className={inputClass}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
+}
+
+function getManagedOptions(options: OrderFormOption[], fieldKey: string) {
+  return options
+    .filter((option) => option.field_key === fieldKey && option.is_available)
+    .sort((a, b) => a.display_order - b.display_order)
+    .map((option) => ({ value: option.option_value, label: option.option_label }));
 }

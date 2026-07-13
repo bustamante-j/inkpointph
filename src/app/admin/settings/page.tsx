@@ -2,28 +2,17 @@ import { ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
-import { business } from "@/lib/constants";
-import { isSupabaseConfigured } from "@/lib/supabase/server";
+import { ButtonLink } from "@/components/ui/button";
+import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const settings = [
-  ["Business name", business.name],
-  ["Location", business.location],
-  ["Motto", business.motto],
-  ["Website", business.website],
-  ["Email", business.email],
-  ["Phone", business.phone],
-  ["Messenger", business.messenger],
-  ["Payments", "Cash and GCash accepted"],
-];
 
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="Business profile, environment status, and deployment notes for the admin owner."
+        description="Security, database, deployment, and backup status for the owner."
       />
       {!isSupabaseConfigured() ? (
         <Notice title="Supabase is not configured" tone="warning">
@@ -34,20 +23,23 @@ export default function SettingsPage() {
           Admin routes can use Supabase Auth, RLS policies, and live tables.
         </Notice>
       )}
+      {!isServiceRoleConfigured() ? (
+        <Notice title="Secure order key is missing" tone="warning">
+          Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel and your local environment. Keep it server-only.
+        </Notice>
+      ) : (
+        <Notice title="Secure public order service detected" tone="success">
+          Public order inserts and private uploads can use the server-only credential.
+        </Notice>
+      )}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-zinc-950">Business profile</h2>
+            <h2 className="font-semibold text-zinc-950">Website content</h2>
           </CardHeader>
-          <CardContent>
-            <dl className="space-y-4">
-              {settings.map(([label, value]) => (
-                <div key={label} className="flex justify-between gap-4 border-b border-zinc-100 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-sm font-medium text-zinc-500">{label}</dt>
-                  <dd className="text-right text-sm font-semibold text-zinc-950">{value}</dd>
-                </div>
-              ))}
-            </dl>
+          <CardContent className="space-y-4">
+            <p className="text-sm leading-6 text-zinc-600">Business information, hero media, contact links, sections, order steps, and FAQs now live in the Website Manager.</p>
+            <ButtonLink href="/admin/website">Open Website Manager</ButtonLink>
           </CardContent>
         </Card>
         <Card>
@@ -57,9 +49,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-3 text-sm text-zinc-700">
             {[
               "Use Supabase Auth for the owner account.",
-              "Create a matching profile row with role owner or admin.",
+              "Keep public email sign-up disabled.",
+              "Create profile roles only through the Supabase SQL editor.",
               "Keep the service role key off the browser.",
-              "Run the schema policies before adding private business data.",
+              "Run business-upgrade.sql before accepting orders.",
+              "Download a JSON backup regularly from Reports.",
               "Review Activity Logs after sensitive changes.",
             ].map((item) => (
               <div key={item} className="flex gap-3 border border-zinc-100 p-3">

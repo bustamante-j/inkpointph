@@ -2,6 +2,7 @@ import { DashboardGraphs } from "@/components/admin/dashboard-graphs";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatCard } from "@/components/admin/stat-card";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
@@ -18,7 +19,8 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="Orders, payments, inventory, and recent activity."
+        description="Today’s priorities, order flow, money, demand, and stock."
+        action={{ href: "/admin/projects/new", label: "Add Walk-in Order" }}
       />
       {!data.configured ? (
         <Notice title="Connect Supabase to activate live data" tone="warning">
@@ -27,7 +29,15 @@ export default async function DashboardPage() {
       ) : null}
       {data.error ? <Notice title="Dashboard data issue" tone="warning">{data.error}</Notice> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 border border-red-900/15 bg-white p-3 sm:grid-cols-2 xl:grid-cols-5">
+        <ButtonLink href="/admin/online-orders" variant="secondary">Review online orders</ButtonLink>
+        <ButtonLink href="/admin/projects/new" variant="secondary">New walk-in order</ButtonLink>
+        <ButtonLink href="/admin/expenses/new" variant="secondary">Record expense</ButtonLink>
+        <ButtonLink href="/admin/inventory" variant="secondary">Update stock</ButtonLink>
+        <ButtonLink href="/admin/website" variant="secondary">Edit website</ButtonLink>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Clients" value={summary.totalClients} />
         <StatCard
           label="Online orders"
@@ -36,18 +46,19 @@ export default async function DashboardPage() {
           tone="red"
         />
         <StatCard label="Projects" value={summary.totalProjects} />
+        <StatCard label="Today’s sales" value={formatCurrency(summary.todaySales)} tone="dark" />
         <StatCard label="Monthly sales" value={formatCurrency(summary.monthlySales)} tone="dark" />
+        <StatCard label="Monthly expenses" value={formatCurrency(summary.monthlyExpenses)} />
+        <StatCard label="Estimated monthly profit" value={formatCurrency(summary.estimatedNetProfit)} tone="red" />
         <StatCard label="Low stock" value={summary.lowStockItems} tone="red" />
       </div>
 
       <DashboardGraphs
-        summary={summary}
-        recentProjects={data.recentProjects}
-        recentOnlineOrders={data.recentOnlineOrders}
+        analytics={data.analytics}
         lowStock={data.lowStock}
       />
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-3">
         <Card className="border-zinc-300">
           <CardHeader className="p-4">
             <h2 className="text-sm font-black uppercase tracking-wide text-zinc-950">
@@ -64,7 +75,7 @@ export default async function DashboardPage() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-zinc-950">
-                        {String(order.customer_name ?? "Online customer")}
+                        {String(order.order_number ?? order.customer_name ?? "Online customer")}
                       </p>
                       <p className="mt-1 text-xs text-zinc-500">
                         {String(order.service_type ?? "Service")} -{" "}
