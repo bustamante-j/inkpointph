@@ -23,28 +23,120 @@ export const business = {
 export const defaultServices = [
   {
     name: "Printing",
+    slug: "printing",
     description: "Upload your document and choose black and white or colored printing.",
     starting_price: 5,
     category: "Documents",
+    image_url: "/images/services/printing.png",
+    pricing_summary: "PHP 5 non-colored / PHP 10 colored per page",
+    quantity_label: "Number of copies",
+    requires_page_count: true,
+    allows_color: true,
+    requires_paper_size: true,
+    allows_sides: true,
+    allows_photo_size: false,
+    allows_certificate_type: false,
   },
   {
     name: "Photocopy",
+    slug: "photocopy",
     description: "Clear photocopies for school papers, IDs, forms, and office documents.",
     starting_price: 3,
     category: "Documents",
+    image_url: "/images/services/photocopy.png",
+    pricing_summary: "PHP 3 non-colored / PHP 5 colored per page",
+    quantity_label: "Number of copies",
+    requires_page_count: true,
+    allows_color: true,
+    requires_paper_size: true,
+    allows_sides: true,
+    allows_photo_size: false,
+    allows_certificate_type: false,
   },
   {
     name: "Photo Printing",
+    slug: "photo-printing",
     description: "Photo prints from uploaded files, available in common sizes.",
     starting_price: 50,
     category: "Photo",
+    image_url: "/images/services/photo-printing.png",
+    pricing_summary: "PHP 50-100 per photo",
+    quantity_label: "Number of photos",
+    requires_page_count: false,
+    allows_color: false,
+    requires_paper_size: false,
+    allows_sides: false,
+    allows_photo_size: true,
+    allows_certificate_type: false,
   },
   {
     name: "Certificate Printing",
+    slug: "certificate-printing",
     description: "Clean certificate printing for school, recognition, events, and office use.",
     starting_price: 15,
     category: "Events",
+    image_url: "/images/services/certificate-printing.png",
+    pricing_summary: "PHP 15 per certificate",
+    quantity_label: "Number of certificates",
+    requires_page_count: false,
+    allows_color: true,
+    requires_paper_size: true,
+    allows_sides: false,
+    allows_photo_size: false,
+    allows_certificate_type: true,
   },
+];
+
+export const defaultSiteSettings = {
+  id: "main",
+  business_name: business.name,
+  location: business.location,
+  address_note: business.addressNote,
+  motto: business.motto,
+  business_description:
+    "Friendly and reliable printing for school, work, events, and everyday needs.",
+  hero_eyebrow: "Printing made simple",
+  hero_title: "Bring your ideas. We will put them on paper.",
+  hero_description:
+    "Choose a service, upload your file, review the calculated price, and attach your GCash payment screenshot.",
+  hero_image_url: "/images/inkpoint-hero-bright.png",
+  logo_url: "/brand/logo/inkpoint-logo.png",
+  mascot_url: "/brand/mascot/inkpoint-mascot.png",
+  messenger_url: business.messenger,
+  facebook_url: business.facebook,
+  facebook_name: business.facebookName,
+  email: business.email,
+  phone: business.phone === "To follow" ? "" : business.phone,
+  website_url: business.website === "To follow" ? "" : business.website,
+  hours: business.hours,
+  hours_note: business.hoursNote,
+  payment_instructions:
+    "Online orders require a GCash payment screenshot before submission.",
+  walk_in_note: "Walk-ins are always welcome. No registration or online order is required.",
+  announcement: "",
+  seo_title: "InkPoint Prints & Services | Printing in Baguio City",
+  seo_description:
+    "Printing, photocopy, photo printing, and certificate printing in Crystal Cave, Baguio City.",
+  primary_color: "#7f1017",
+  background_color: "#fff7ed",
+};
+
+export const defaultSiteSections = [
+  { section_key: "order", title: "Start your order", is_visible: true, display_order: 1 },
+  { section_key: "contact", title: "Contact InkPoint", is_visible: true, display_order: 2 },
+  { section_key: "services", title: "Services and prices", is_visible: true, display_order: 3 },
+  { section_key: "products", title: "Print examples", is_visible: true, display_order: 4 },
+  { section_key: "packages", title: "Helpful packages", is_visible: true, display_order: 5 },
+  { section_key: "process", title: "How it works", is_visible: true, display_order: 6 },
+  { section_key: "faq", title: "Quick answers", is_visible: true, display_order: 7 },
+];
+
+export const defaultOrderStepItems = [
+  { title: "Choose", description: "Select the service and print options you need.", is_visible: true, display_order: 1 },
+  { title: "Upload", description: "Attach your document, image, or certificate file.", is_visible: true, display_order: 2 },
+  { title: "Pay", description: "Review the calculated price and attach your GCash screenshot.", is_visible: true, display_order: 3 },
+  { title: "Track", description: "Keep your order number and check the latest status anytime.", is_visible: true, display_order: 4 },
+  { title: "Collect", description: "Pick up at the shop or arrange delivery when ready.", is_visible: true, display_order: 5 },
 ];
 
 export const defaultPackages = [
@@ -110,6 +202,17 @@ export const priceRows = [
   ["Certificate Printing", "Per certificate", "PHP 15.00"],
 ];
 
+export const defaultPriceItems = [
+  { service_name: "Printing", unit_label: "Non-colored per page", price_label: "PHP 5.00", category: "Documents", option_key: "non_colored", unit_price: 5, max_price: null, display_order: 1 },
+  { service_name: "Printing", unit_label: "Colored per page", price_label: "PHP 10.00", category: "Documents", option_key: "colored", unit_price: 10, max_price: null, display_order: 2 },
+  { service_name: "Photocopy", unit_label: "Non-colored per page", price_label: "PHP 3.00", category: "Documents", option_key: "non_colored", unit_price: 3, max_price: null, display_order: 3 },
+  { service_name: "Photocopy", unit_label: "Colored per page", price_label: "PHP 5.00", category: "Documents", option_key: "colored", unit_price: 5, max_price: null, display_order: 4 },
+  { service_name: "Photo Printing", unit_label: "2x2 photo", price_label: "PHP 50.00", category: "Photo", option_key: "2x2", unit_price: 50, max_price: null, display_order: 5 },
+  { service_name: "Photo Printing", unit_label: "4R photo", price_label: "PHP 75.00", category: "Photo", option_key: "4r", unit_price: 75, max_price: null, display_order: 6 },
+  { service_name: "Photo Printing", unit_label: "5R photo", price_label: "PHP 100.00", category: "Photo", option_key: "5r", unit_price: 100, max_price: null, display_order: 7 },
+  { service_name: "Certificate Printing", unit_label: "Per certificate", price_label: "PHP 15.00", category: "Events", option_key: "default", unit_price: 15, max_price: null, display_order: 8 },
+];
+
 export const orderSteps = [
   "Fill out the order form.",
   "Upload your file if available.",
@@ -153,6 +256,12 @@ export const faqItems = [
     answer: "InkPoint Prints & Services is located at Crystal Cave, Baguio City.",
   },
 ];
+
+export const defaultFaqs = faqItems.map((item, index) => ({
+  ...item,
+  is_visible: true,
+  display_order: index + 1,
+}));
 
 export const serviceTypeOptions = [
   "Printing",

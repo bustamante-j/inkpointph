@@ -8,6 +8,7 @@ type SubmitButtonProps = {
   pendingText?: string;
   variant?: "primary" | "secondary" | "ghost" | "danger";
   className?: string;
+  disabled?: boolean;
 };
 
 export function SubmitButton({
@@ -15,11 +16,12 @@ export function SubmitButton({
   pendingText = "Saving...",
   variant = "primary",
   className,
+  disabled = false,
 }: SubmitButtonProps) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={pending} variant={variant} className={className}>
+    <Button type="submit" disabled={pending || disabled} variant={variant} className={className}>
       {pending ? pendingText : children}
     </Button>
   );

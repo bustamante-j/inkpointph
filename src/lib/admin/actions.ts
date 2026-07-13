@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { moduleConfigs, type FieldConfig, type ModuleKey } from "@/lib/admin/module-config";
-import { requireSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdminSupabaseClient } from "@/lib/supabase/server";
 import { toNumber } from "@/lib/utils";
 import type { AnyRecord } from "@/types/database";
 
@@ -14,7 +14,7 @@ export async function createRecordAction(moduleKey: ModuleKey, formData: FormDat
   const config = moduleConfigs[moduleKey];
   if (!config?.creatable) throw new Error("This module does not allow new records.");
 
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const payload = await buildPayload(moduleKey, formData);
 
   const { data, error } = await supabase
@@ -53,7 +53,7 @@ export async function updateRecordAction(
   if (!config?.editable) throw new Error("This module does not allow editing.");
   uuidSchema.parse(id);
 
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const payload = await buildPayload(moduleKey, formData, id);
 
   const { data, error } = await supabase
@@ -90,7 +90,7 @@ export async function archiveRecordAction(moduleKey: ModuleKey, id: string) {
   const config = moduleConfigs[moduleKey];
   uuidSchema.parse(id);
 
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
 
   if (!config.archiveValue || !config.statusField) {
     await hardDeleteRecordAction(moduleKey, id);
@@ -126,7 +126,7 @@ export async function hardDeleteRecordAction(moduleKey: ModuleKey, id: string) {
   const config = moduleConfigs[moduleKey];
   uuidSchema.parse(id);
 
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
 
   if (moduleKey === "payments") {
     const { data: existing } = await supabase
@@ -161,7 +161,7 @@ export async function addProjectNoteAction(orderId: string, formData: FormData) 
   const note = String(formData.get("note") ?? "").trim();
   if (!note) throw new Error("A timeline note is required.");
 
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -190,7 +190,7 @@ export async function addProjectNoteAction(orderId: string, formData: FormData) 
 
 export async function addPaymentToProjectAction(orderId: string, formData: FormData) {
   uuidSchema.parse(orderId);
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const payload = {
     order_id: orderId,
     amount: toNumber(formData.get("amount")),
@@ -218,8 +218,33 @@ export async function addPaymentToProjectAction(orderId: string, formData: FormD
   revalidatePath(`/admin/projects/${orderId}`);
 }
 
+export async function convertOnlineOrderAction(onlineOrderId: string) {
+  uuidSchema.parse(onlineOrderId);
+  const supabase = await requireAdminSupabaseClient();
+  const { data, error } = await supabase.rpc("convert_online_order_to_project", {
+    target_online_order_id: onlineOrderId,
+  });
+
+  if (error) throw new Error(error.message);
+  const projectId = String(data);
+
+  await logActivity({
+    action_type: "status_change",
+    module: "online_orders",
+    record_id: onlineOrderId,
+    record_label: "Online order converted",
+    description: "Converted the online booking into a managed project/order.",
+    metadata: { project_id: projectId },
+  });
+
+  revalidatePath("/admin/online-orders");
+  revalidatePath("/admin/projects");
+  revalidatePath("/admin/dashboard");
+  redirect(`/admin/projects/${projectId}`);
+}
+
 export async function logoutAction() {
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   await logActivity({
     action_type: "logout",
     module: "authentication",
@@ -317,7 +342,7 @@ async function uploadImageField(
     throw new Error(`${field.label} must be ${maxSizeMb} MB or smaller.`);
   }
 
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const bucket = field.storageBucket ?? "product-images";
   const extension = getImageExtension(rawValue);
   const objectPath = `products/${crypto.randomUUID()}.${extension}`;
@@ -366,7 +391,7 @@ function emptyToNull(value: FormDataEntryValue | null) {
 }
 
 async function generateOrderNumber() {
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const dateKey = new Date().toISOString().slice(0, 10).replaceAll("-", "");
   const prefix = `IP-${dateKey}`;
 
@@ -379,7 +404,7 @@ async function generateOrderNumber() {
 }
 
 async function refreshOrderPaymentTotals(orderId: string) {
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const [payments, project] = await Promise.all([
     supabase.from("payments").select("amount").eq("order_id", orderId),
     supabase.from("projects_orders").select("total_price").eq("id", orderId).single(),
@@ -430,7 +455,7 @@ async function logActivity(log: {
   description: string;
   metadata: AnyRecord;
 }) {
-  const supabase = await requireSupabaseServerClient();
+  const supabase = await requireAdminSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

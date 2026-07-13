@@ -54,9 +54,29 @@ export async function fetchRecord(moduleKey: ModuleKey, id: string) {
     .eq("id", id)
     .single();
 
+  const record = asRecord(data);
+  if (moduleKey === "onlineOrders" && record) {
+    const filePaths = Array.isArray(record.order_file_paths)
+      ? record.order_file_paths.map(String)
+      : [];
+    if (filePaths.length) {
+      const { data: signedFiles } = await supabase.storage
+        .from("order-uploads")
+        .createSignedUrls(filePaths, 60 * 30);
+      record.order_file_signed_urls = signedFiles?.map((file) => file.signedUrl) ?? [];
+    }
+
+    if (record.payment_screenshot_path) {
+      const { data: screenshot } = await supabase.storage
+        .from("order-uploads")
+        .createSignedUrl(String(record.payment_screenshot_path), 60 * 30);
+      record.payment_screenshot_signed_url = screenshot?.signedUrl ?? null;
+    }
+  }
+
   return {
     configured: true,
-    record: asRecord(data),
+    record,
     error: error?.message ?? null,
   };
 }

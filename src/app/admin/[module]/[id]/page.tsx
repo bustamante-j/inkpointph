@@ -16,6 +16,7 @@ import {
 import {
   addPaymentToProjectAction,
   addProjectNoteAction,
+  convertOnlineOrderAction,
 } from "@/lib/admin/actions";
 import {
   getModuleConfig,
@@ -58,7 +59,33 @@ export default async function RecordDetailPage({ params }: PageProps) {
       {!result.configured ? <Notice title="Supabase is not configured" tone="warning">Record details will load after the database is connected.</Notice> : null}
       {result.error ? <Notice title="Record issue" tone="warning">{result.error}</Notice> : null}
       {result.record ? (
-        <DetailList fields={config.detailFields} record={result.record} />
+        <>
+          <DetailList fields={config.detailFields} record={result.record} />
+          {config.key === "onlineOrders" ? (
+            <Card>
+              <CardHeader>
+                <h2 className="font-semibold text-zinc-950">Managed order</h2>
+              </CardHeader>
+              <CardContent>
+                {result.record.project_order_id ? (
+                  <a
+                    href={`/admin/projects/${String(result.record.project_order_id)}`}
+                    className="inline-flex h-10 items-center bg-red-950 px-4 text-sm font-semibold text-white"
+                  >
+                    Open managed order
+                  </a>
+                ) : (
+                  <form action={convertOnlineOrderAction.bind(null, id)} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="max-w-2xl text-sm leading-6 text-zinc-600">
+                      Verify the payment and total first. Conversion creates or matches the client, creates the project, and records a verified payment.
+                    </p>
+                    <SubmitButton>Convert to managed order</SubmitButton>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
       ) : (
         <EmptyState title="Record unavailable" description="Connect Supabase or choose another record." />
       )}
