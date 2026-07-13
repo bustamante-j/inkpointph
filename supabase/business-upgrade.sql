@@ -706,6 +706,28 @@ select 'Certificate Printing', 'certificate-printing', 'Clean certificate printi
   'Number of certificates', true, true, true, true, 4
 where not exists (select 1 from public.services where name = 'Certificate Printing');
 
+insert into public.packages (
+  name, description, included_services, starting_price, is_available, display_order
+)
+select seed.* from (values
+  ('Student Document Pack', 'Printing or photocopy for modules, reviewers, forms, and assignments.', array['Printing', 'Photocopy']::text[], 3::numeric, true, 1),
+  ('Colored Output Pack', 'Colored printing or colored photocopy for pages that need visual clarity.', array['Printing', 'Photocopy']::text[], 5::numeric, true, 2),
+  ('Photo Print Set', 'Photo printing for personal, school, and keepsake images.', array['Photo Printing']::text[], 50::numeric, true, 3),
+  ('Certificate Set', 'Certificate printing for classes, events, recognition, and simple awards.', array['Certificate Printing']::text[], 15::numeric, true, 4)
+) as seed(name, description, included_services, starting_price, is_available, display_order)
+where not exists (select 1 from public.packages p where p.name = seed.name);
+
+insert into public.products (
+  name, description, starting_price, category, image_url, is_available, display_order
+)
+select seed.* from (values
+  ('Printed Documents', 'Everyday document prints in black and white or colored output.', 5::numeric, 'Printing', '/images/services/printing.png', true, 1),
+  ('Photocopies', 'Readable copies for forms, IDs, school work, and office paperwork.', 3::numeric, 'Photocopy', '/images/services/photocopy.png', true, 2),
+  ('Photo Prints', 'Glossy photo prints from uploaded customer images.', 50::numeric, 'Photo', '/images/services/photo-printing.png', true, 3),
+  ('Certificates', 'Certificate prints for recognition, school, and event needs.', 15::numeric, 'Certificates', '/images/services/certificate-printing.png', true, 4)
+) as seed(name, description, starting_price, category, image_url, is_available, display_order)
+where not exists (select 1 from public.products p where p.name = seed.name);
+
 update public.price_items set option_key = 'non_colored', unit_price = 5, max_price = null
 where service_name = 'Printing' and lower(unit_label) like 'non-colored%';
 update public.price_items set option_key = 'colored', unit_price = 10, max_price = null

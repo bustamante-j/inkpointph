@@ -49,4 +49,14 @@ describe("business upgrade security contract", () => {
       );
     });
   });
+
+  it("bootstraps the essential public catalog without demo orders", () => {
+    sqlFiles.forEach(({ sql }) => {
+      expect(sql).toContain("insert into public.site_settings");
+      expect(sql).toContain("insert into public.services");
+      expect(sql).toContain("insert into public.price_items");
+      expect(sql).toContain("insert into public.products");
+      expect(sql).toContain("insert into public.packages");
+    });
+  });
 });
